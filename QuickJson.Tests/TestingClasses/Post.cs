@@ -6,5 +6,5 @@ internal class Post
 {
     public string Title { get; set; }
     public string Content { get; set; }
-    public List<CommentSimple> Comments { get; set; }
+    public List<Comment> Comments { get; set; }
 }

@@ -34,7 +34,47 @@ public static class QuickJson
 
         var type = objectToSerialize?.GetType();
         var pathsToModify = GetPathsToModify(type);
-        return JsonConvert.SerializeObject(objectToSerialize);
+        var jObject = JObject.Parse(JsonConvert.SerializeObject(objectToSerialize));
+
+        var result = UpdateJsonPaths(jObject, pathsToModify);
+
+        return result.ToString();
+    }
+
+    private static JObject UpdateJsonPaths(JObject jObject, List<PathToModify> pathsToModify)
+    {
+        foreach (var path in pathsToModify)
+        {
+            var originalPathParts = path.OriginalPath.Split('.');
+            var newPathParts = path.NewPath.Split('.');
+            var valueToMove = jObject[originalPathParts[0]];
+            foreach (var pathPart in originalPathParts[1..])
+            {
+                valueToMove = valueToMove[pathPart];
+            }
+
+            if (jObject[newPathParts[0]] is null)
+                jObject[newPathParts[0]] = new JObject();
+            var currentObject = jObject[newPathParts[0]];
+
+            foreach (var pathPart in newPathParts[1..^1])
+            {
+                if (currentObject[pathPart] is null)
+                    currentObject[pathPart] = new JObject();
+
+                currentObject = currentObject[pathPart];
+            }
+
+            var name = newPathParts[^1];
+            currentObject[name] = valueToMove; 
+
+            jObject[originalPathParts[^2]]
+                .Children<JProperty>()
+                .First(x => x.Name == originalPathParts[^1])
+                .Remove();
+        }
+
+        return jObject;
     }
 
     public static T DeserializeObject<T>(string json) where T : new()
@@ -79,32 +119,24 @@ public static class QuickJson
         var properties = type.GetProperties();
         foreach (var property in properties)
         {
+            var startingPathForProperty = startingPath;
+
             var jsonPathAttribute = property.GetCustomAttribute<JsonPathAttribute>();
             if (jsonPathAttribute is null) //iterate deeper if null
-                startingPath += "." + property.Name; // TODO: Update to use correct name if JsonPropertyAttribute from NewtonsoftJson was used. Maybe create QuickJson equivalent to not use different namespaces?
+                startingPathForProperty += "." + property.Name; // TODO: Update to use correct name if JsonPropertyAttribute from NewtonsoftJson was used. Maybe create QuickJson equivalent to not use different namespaces?
             else
             {
-                var originalPath = startingPath + "." + property.Name;
-                startingPath += "." + jsonPathAttribute.Path;
-                if (startingPath[^1] == '.') // If path ends with . - then use original property name, otherwise - last part is property name
-                    startingPath += property.Name;
+                var originalPath = startingPathForProperty + "." + property.Name;
+                startingPathForProperty += "." + jsonPathAttribute.Path;
+                if (startingPathForProperty[^1] == '.') // If path ends with . - then use original property name, otherwise - last part is property name
+                    startingPathForProperty += property.Name;
 
-                pathsToModify.Add(new PathToModify { OriginalPath = originalPath, NewPath = startingPath });
+                pathsToModify.Add(new PathToModify { OriginalPath = originalPath[1..], NewPath = startingPathForProperty[1..] });
             }
 
-            pathsToModify.AddRange(GetProperties(property.PropertyType, startingPath)); // what to do with the returned list?
+            pathsToModify.AddRange(GetPathsToModify(property.PropertyType, startingPathForProperty));
         }
 
         return pathsToModify;
-        //return type.GetProperties().Select(x =>
-        //{
-        //    var jsonPathAttribute = x.GetCustomAttribute<JsonPathAttribute>();
-        //    return new JsonProperty
-        //    {
-        //        Property = x,
-        //        Path = jsonPathAttribute?.PathParts,
-        //        Name = jsonPathAttribute?.PropertyName
-        //    };
-        //}).ToList();
     }
 }
