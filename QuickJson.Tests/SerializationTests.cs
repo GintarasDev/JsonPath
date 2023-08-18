@@ -30,7 +30,7 @@ public class SerializationTests
         var result = QuickJson.SerializeObject(blog);
 
         // Assert
-        Assert.Equal("expected", result);
+        Assert.Equal("{\r\n  \"BlogId\": \"25609f46-3ea8-41a1-9d0c-931d272a542b\",\r\n  \"Author\": {\r\n    \"Id\": \"995c1dd6-ad73-4546-a22d-6279a9770d02\",\r\n    \"Name\": \"JohnDoe\",\r\n    \"Description\": \"A blog about technology and programming\"\r\n  }\r\n}", result);
     }
 
     private static BlogSimple CreateTestBlogWithoutAttributes()
@@ -76,29 +76,29 @@ public class SerializationTests
             UserId = Guid.NewGuid(),
             Username = "JohnDoe",
             Description = "A blog about technology and programming",
-            //Posts = new List<Post>
-            //{
-            //    new Post
-            //    {
-            //        Title = "Introduction to C#",
-            //        Content = "C# is a modern, object-oriented programming language...",
-            //        Comments = new List<Comment>
-            //        {
-            //            new Comment {Username = "JaneDoe", Content = "Great post!"},
-            //            new Comment {Username = "BobSmith", Content = "Very informative."}
-            //        }
-            //    },
-            //    new Post
-            //    {
-            //        Title = "Advanced C# Features",
-            //        Content = "C# has many advanced features such as LINQ, async/await...",
-            //        Comments = new List<Comment>
-            //        {
-            //            new Comment {Username = "AliceJones", Content = "Thanks for sharing!"},
-            //            new Comment {Username = "CharlieBrown", Content = "Can't wait to try these out."}
-            //        }
-            //    }
-            //}
+            Posts = new List<Post>
+            {
+                new Post
+                {
+                    Title = "Introduction to C#",
+                    Content = "C# is a modern, object-oriented programming language...",
+                    Comments = new List<Comment>
+                    {
+                        new Comment {Username = "JaneDoe", Content = "Great post!"},
+                        new Comment {Username = "BobSmith", Content = "Very informative."}
+                    }
+                },
+                new Post
+                {
+                    Title = "Advanced C# Features",
+                    Content = "C# has many advanced features such as LINQ, async/await...",
+                    Comments = new List<Comment>
+                    {
+                        new Comment {Username = "AliceJones", Content = "Thanks for sharing!"},
+                        new Comment {Username = "CharlieBrown", Content = "Can't wait to try these out."}
+                    }
+                }
+            }
         };
         return blog;
     }

@@ -25,7 +25,7 @@ public class PathToModify
 
 public static class QuickJson
 {
-    static readonly List<PathToModify> EmptyList = new();
+    static readonly List<PathToModify> EmptyList = new(); // Order of this list is very important
 
     public static string SerializeObject(object? objectToSerialize)
     {
@@ -57,21 +57,38 @@ public static class QuickJson
                 jObject[newPathParts[0]] = new JObject();
             var currentObject = jObject[newPathParts[0]];
 
-            foreach (var pathPart in newPathParts[1..^1])
+            if (newPathParts.Length > 1)
             {
-                if (currentObject[pathPart] is null)
-                    currentObject[pathPart] = new JObject();
+                foreach (var pathPart in newPathParts[1..^1]) // TODO: handle nulls
+                {
+                    if (currentObject[pathPart] is null)
+                        currentObject[pathPart] = new JObject();
 
-                currentObject = currentObject[pathPart];
+                    currentObject = currentObject[pathPart];
+                }
             }
 
-            var name = newPathParts[^1];
-            currentObject[name] = valueToMove; 
+            if (newPathParts.Length > 1)
+            {
+                var name = newPathParts[^1];
+                currentObject[name] = valueToMove;
+            }
+            else
+            {
+                jObject[newPathParts[0]] = valueToMove;
+            }
 
-            jObject[originalPathParts[^2]]
-                .Children<JProperty>()
-                .First(x => x.Name == originalPathParts[^1])
-                .Remove();
+            if (originalPathParts.Length < 2)
+            {
+                jObject[originalPathParts[0]].Parent.Remove();
+            }
+            else
+            {
+                jObject[originalPathParts[^2]]
+                    .Children<JProperty>()
+                    .First(x => x.Name == originalPathParts[^1])
+                    .Remove();
+            }
         }
 
         return jObject;
@@ -108,35 +125,53 @@ public static class QuickJson
         //return instance;
     }
 
-    public static List<PathToModify> GetPathsToModify(Type type, string startingPath = "") // TODO: Use string builder?
+    private static List<PathToModify> GetPathsToModify(Type type, string startingPath = "")
     {
         if (type.IsPrimitive)
             return EmptyList;
 
-        // TODO: make it so the path would be considered from parent
         var pathsToModify = new List<PathToModify>();
 
-        var properties = type.GetProperties();
-        foreach (var property in properties)
-        {
-            var startingPathForProperty = startingPath;
-
-            var jsonPathAttribute = property.GetCustomAttribute<JsonPathAttribute>();
-            if (jsonPathAttribute is null) //iterate deeper if null
-                startingPathForProperty += "." + property.Name; // TODO: Update to use correct name if JsonPropertyAttribute from NewtonsoftJson was used. Maybe create QuickJson equivalent to not use different namespaces?
-            else
-            {
-                var originalPath = startingPathForProperty + "." + property.Name;
-                startingPathForProperty += "." + jsonPathAttribute.Path;
-                if (startingPathForProperty[^1] == '.') // If path ends with . - then use original property name, otherwise - last part is property name
-                    startingPathForProperty += property.Name;
-
-                pathsToModify.Add(new PathToModify { OriginalPath = originalPath[1..], NewPath = startingPathForProperty[1..] });
-            }
-
-            pathsToModify.AddRange(GetPathsToModify(property.PropertyType, startingPathForProperty));
-        }
+        foreach (var property in type.GetProperties())
+            pathsToModify.AddRange(GetPathsToModifyForNonPrimitiveProperty(property, startingPath));
 
         return pathsToModify;
+    }
+
+    private static List<PathToModify> GetPathsToModifyForNonPrimitiveProperty(PropertyInfo property, string currentPath)
+    {
+        var pathsToModify = new List<PathToModify>();
+
+        var jsonPathAttribute = property.GetCustomAttribute<JsonPathAttribute>();
+        if (jsonPathAttribute is null)
+            currentPath += $".{GetJsonPropertyName(property)}";
+        else
+        {
+            var originalPath = $"{currentPath}.{GetJsonPropertyName(property)}";
+            currentPath = jsonPathAttribute.GetPropertyPath(currentPath, property);
+
+            pathsToModify.Add(new PathToModify { OriginalPath = originalPath[1..], NewPath = currentPath[1..] });
+        }
+
+        pathsToModify.AddRange(GetPathsToModify(property.PropertyType, currentPath));
+        return pathsToModify;
+    }
+
+    private static string GetPropertyPath(this JsonPathAttribute jsonPathAttribute, string currentPath, PropertyInfo property)
+    {
+        currentPath += "." + jsonPathAttribute.Path;
+        if (currentPath[^1] == '.') // If path ends with . - then use original property name, otherwise - last part is property name
+            currentPath += property.Name;
+
+        return currentPath;
+    }
+
+    private static string GetJsonPropertyName(PropertyInfo property)
+    {
+        var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
+        if (jsonPropertyAttribute is not null)
+            return jsonPropertyAttribute.PropertyName;
+
+        return property.Name;
     }
 }

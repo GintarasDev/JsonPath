@@ -11,7 +11,7 @@ internal class Blog
     public string Username { get; set; }
     [JsonPath("Author.")] // Ending with . means that we should put the field in Author object with the original name ("Description")
     public string Description { get; set; }
-    // TODO: Implement
-    //[JsonPath("Articles")]
-    //public List<Post> Posts { get; set; }
+
+    [JsonPath("Articles")]
+    public List<Post> Posts { get; set; }
 }
