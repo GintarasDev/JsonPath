@@ -10,7 +10,9 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace QuickJson;
 
@@ -63,7 +65,7 @@ public static class QuickJson
             settings = _defaultSettings;
         }
 
-        var pathsToModify = type.GetAllPaths(settings);
+        var pathsToModify = type.GetAllPathsToModify(settings);
         if (pathsToModify.Any())
         {
             var flattenedJson = GetFlattenedJsonDictionary(objectToSerialize);
@@ -94,18 +96,59 @@ public static class QuickJson
                 jsonDictionary.Remove(pathModification.OriginalPath);
             }
         }
+
+        foreach (var pathModification in pathsToModify.Where(p => p.IsEnumerable))
+        {
+            foreach (var matchingPath in GetMatchingEnumerablePaths(jsonDictionary, pathModification.OriginalPath))
+            {
+                var newPath = PrepareNewIEnumerablePath(matchingPath, pathModification.NewPath);
+                jsonDictionary[newPath] = jsonDictionary[matchingPath];
+                jsonDictionary.Remove(matchingPath);
+            }
+        }
     }
 
-    private static List<PathToModify> GetAllPaths(this Type type, JsonSerializerSettings? settings)
+    private static string PrepareNewIEnumerablePath(string matchingPath, string newPath)
+    {
+        var result = newPath;
+        var indices = GetEnumerablePathIndices(matchingPath);
+
+        var regex = new Regex(@"\[\*\]");
+        foreach (var i in indices)
+        {
+            result = regex.Replace(result, $"[{i}]", 1);
+        }
+
+        return result;
+    }
+
+    private static int[] GetEnumerablePathIndices(string path)
+    {
+        var matches = Regex.Matches(path, @"\[(\d+)\]");
+        return matches.Select(m => int.Parse(m.Groups[1].Value)).ToArray();
+    }
+
+    private static string[] GetMatchingEnumerablePaths(Dictionary<string, string> jsonDictionary, string path)
+    {
+        var template = path.Replace("[*]", @"\[\d+\]\");
+        return jsonDictionary.Keys.Where(key => Regex.IsMatch(key, template)).ToArray();
+    }
+
+    private static List<PathToModify> GetAllPathsToModify(this Type type, JsonSerializerSettings? settings)
     {
         var pathsToModify = new List<PathToModify>();
         foreach (var path in type.GetPathsToModify(settings))
+        {
+            if (path.path == path.newPath)
+                continue;
+
             pathsToModify.Add(new()
             {
                 OriginalPath = path.path[1..],
                 NewPath = path.newPath[1..],
                 IsEnumerable = path.isEnumerable
             });
+        }
 
         return pathsToModify;
     }
