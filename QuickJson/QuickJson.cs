@@ -13,6 +13,36 @@ public class PathToModify
     public bool IsEnumerable = false;
 }
 
+// TODO: we need to be able to convert this to json:
+/*
+BlogId
+Author.Id
+Author.Name
+Author.Description
+Sponsor.Name
+Sponsor.Description
+Sponsor.NumberOfAds
+Sponsor.Metadata.SponsorSince
+Author.Sponsor.Name
+Author.Sponsor.Description
+Author.Sponsor.NumberOfAds
+Author.Sponsor.Metadata.SponsorSince
+Articles[0].Title
+Articles[1].Title
+Articles[1].Content
+Articles[1].Metadata.PublishedOn
+Articles[0].Comments[1].Author.Name
+Articles[0].Comments[1].Content
+Articles[1].Comments[0].Author.Name
+Articles[1].Comments[0].Content
+Articles[0].Content
+Articles[0].Metadata.PublishedOn,
+Articles[0].Comments[0].Author.Name
+Articles[1].Comments[1].Author.Name
+Articles[1].Comments[1].Content
+Articles[0].Comments[0].Content
+*/
+
 public static class QuickJson
 {
     public static List<Type> TypesToIgnore = new()
