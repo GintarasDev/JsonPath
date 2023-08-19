@@ -45,50 +45,10 @@ public static class QuickJson
     {
         foreach (var path in pathsToModify)
         {
-            var originalPathParts = path.OriginalPath.Split('.');
-            var newPathParts = path.NewPath.Split('.');
-            var valueToMove = jObject[originalPathParts[0]];
-            foreach (var pathPart in originalPathParts[1..])
-            {
-                valueToMove = valueToMove[pathPart];
-            }
+            var originalPath = path.OriginalPath.Split('.');
+            var newPath = path.NewPath.Split('.');
 
-            if (jObject[newPathParts[0]] is null)
-                jObject[newPathParts[0]] = new JObject();
-            var currentObject = jObject[newPathParts[0]];
-
-            if (newPathParts.Length > 1)
-            {
-                foreach (var pathPart in newPathParts[1..^1]) // TODO: handle nulls
-                {
-                    if (currentObject[pathPart] is null)
-                        currentObject[pathPart] = new JObject();
-
-                    currentObject = currentObject[pathPart];
-                }
-            }
-
-            if (newPathParts.Length > 1)
-            {
-                var name = newPathParts[^1];
-                currentObject[name] = valueToMove;
-            }
-            else
-            {
-                jObject[newPathParts[0]] = valueToMove;
-            }
-
-            if (originalPathParts.Length < 2)
-            {
-                jObject[originalPathParts[0]].Parent.Remove();
-            }
-            else
-            {
-                jObject[originalPathParts[^2]]
-                    .Children<JProperty>()
-                    .First(x => x.Name == originalPathParts[^1])
-                    .Remove();
-            }
+            MoveJsonData(jObject, originalPath, newPath);
         }
 
         return jObject;
@@ -123,6 +83,52 @@ public static class QuickJson
         //}
 
         //return instance;
+    }
+
+    private static void MoveJsonData(JObject jObject, string[] originalPath, string[] newPath)
+    {
+        var valueToMove = jObject[originalPath[0]];
+        foreach (var pathPart in originalPath[1..])
+        {
+            valueToMove = valueToMove[pathPart];
+        }
+
+        if (jObject[newPath[0]] is null)
+            jObject[newPath[0]] = new JObject();
+        var currentObject = jObject[newPath[0]];
+
+        if (newPath.Length > 1)
+        {
+            foreach (var pathPart in newPath[1..^1]) // TODO: handle nulls
+            {
+                if (currentObject[pathPart] is null)
+                    currentObject[pathPart] = new JObject();
+
+                currentObject = currentObject[pathPart];
+            }
+        }
+
+        if (newPath.Length > 1)
+        {
+            var name = newPath[^1];
+            currentObject[name] = valueToMove;
+        }
+        else
+        {
+            jObject[newPath[0]] = valueToMove;
+        }
+
+        if (originalPath.Length < 2)
+        {
+            jObject[originalPath[0]].Parent.Remove();
+        }
+        else
+        {
+            jObject[originalPath[^2]]
+                .Children<JProperty>()
+                .First(x => x.Name == originalPath[^1])
+                .Remove();
+        }
     }
 
     private static List<PathToModify> GetPathsToModify(Type type, string startingPath = "")
