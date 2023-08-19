@@ -95,30 +95,30 @@ public class SerializationTests
                 Description = "Software company making different software things",
                 NumberOfAds = 2,
                 CreatedDate = DateTime.UtcNow.AddDays(-3)
+            },
+            Posts = new List<Post>
+            {
+                new Post
+                {
+                    Title = "Introduction to C#",
+                    Content = "C# is a modern, object-oriented programming language...",
+                    Comments = new List<Comment>
+                    {
+                        new Comment {Username = "JaneDoe", Content = "Great post!"},
+                        new Comment {Username = "BobSmith", Content = "Very informative."}
+                    }
+                },
+                new Post
+                {
+                    Title = "Advanced C# Features",
+                    Content = "C# has many advanced features such as LINQ, async/await...",
+                    Comments = new List<Comment>
+                    {
+                        new Comment {Username = "AliceJones", Content = "Thanks for sharing!"},
+                        new Comment {Username = "CharlieBrown", Content = "Can't wait to try these out."}
+                    }
+                }
             }
-            //Posts = new List<Post>
-            //{
-            //    new Post
-            //    {
-            //        Title = "Introduction to C#",
-            //        Content = "C# is a modern, object-oriented programming language...",
-            //        Comments = new List<Comment>
-            //        {
-            //            new Comment {Username = "JaneDoe", Content = "Great post!"},
-            //            new Comment {Username = "BobSmith", Content = "Very informative."}
-            //        }
-            //    },
-            //    new Post
-            //    {
-            //        Title = "Advanced C# Features",
-            //        Content = "C# has many advanced features such as LINQ, async/await...",
-            //        Comments = new List<Comment>
-            //        {
-            //            new Comment {Username = "AliceJones", Content = "Thanks for sharing!"},
-            //            new Comment {Username = "CharlieBrown", Content = "Can't wait to try these out."}
-            //        }
-            //    }
-            //}
         };
         return blog;
     }

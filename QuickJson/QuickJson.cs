@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
@@ -73,17 +74,29 @@ public static class QuickJson
     {
         var paths = new Dictionary<string, string>();
         foreach (var path in type.GetPathsToModify(settings))
-            paths.Add(path.path, path.newPath);
+            paths.Add(path.path[1..], path.newPath[1..]);
 
         return paths;
     }
 
+    // No proper support for dictionaries yet
+    // No proper support for non generic enumerables
     private static IEnumerable<(string path, string newPath)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
     {
+        var myName = propertyInfo is null ? "" : propertyInfo.Name;
+
         var jsonPathAttribute = propertyInfo?.GetCustomAttribute<JsonPathAttribute>();
-        var myNewName = jsonPathAttribute is null ? "" : jsonPathAttribute.Path;
+        var myNewName = jsonPathAttribute is null ? myName : jsonPathAttribute.Path;
+
         if (myNewName.EndsWith("."))
             myNewName += propertyInfo is null ? "" : propertyInfo.Name;
+
+        if (type.IsAssignableTo(typeof(IEnumerable)) && type.IsGenericType)
+        {
+            type = type.GetGenericArguments()[0];
+            myName += "[*]";
+            myNewName += "[*]";
+        }
 
         if (type.CanHaveSubPaths(settings))
         {
@@ -93,8 +106,8 @@ public static class QuickJson
             //var propertiesWithModifications = propertiesToCheck
             //    .ToDictionary(p => p, p => p.GetCustomAttribute<JsonPathAttribute>())
             //    .Where(p => p.Value != null);
-            var myName = propertyInfo is null ? "" : $"{propertyInfo.Name}.";
-            myNewName = myNewName == "" ? myName : $"{myNewName}.";
+            myName += ".";
+            myNewName += ".";
             foreach (var property in propertiesToCheck)
             {
                 foreach (var path in property.PropertyType.GetPathsToModify(settings, property))
@@ -102,10 +115,7 @@ public static class QuickJson
             }
         }
         else
-        {
-            var myName = propertyInfo is null ? "" : propertyInfo.Name;
-            yield return (myName, myNewName == "" ? myName : myNewName);
-        }
+            yield return (myName, myNewName);
     }
 
     private static bool CanHaveSubPaths(this Type type, JsonSerializerSettings? settings) =>

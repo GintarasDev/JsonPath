@@ -17,6 +17,6 @@ internal class Blog
     [JsonPath("Author.Sponsor")]
     public Sponsor AuthorsSponsor { get; set; }
 
-    //[JsonPath("Articles")]
-    //public List<Post> Posts { get; set; }
+    [JsonPath("Articles")]
+    public List<Post> Posts { get; set; }
 }
