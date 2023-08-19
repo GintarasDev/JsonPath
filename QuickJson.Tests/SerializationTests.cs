@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using QuickJson.Tests.TestingClasses;
 using QuickJson.Tests.TestingClasses.WithoutAttributes;
 
@@ -25,6 +26,11 @@ public class SerializationTests
     {
         // Arrange
         var blog = CreateTestBlog();
+
+        var flattened = JObject.FromObject(blog)
+            .Descendants()
+            .OfType<JValue>()
+            .ToDictionary(jv => jv.Path, jv => jv.ToString());
 
         // Act
         var result = QuickJson.SerializeObject(blog);
@@ -76,29 +82,43 @@ public class SerializationTests
             UserId = Guid.NewGuid(),
             Username = "JohnDoe",
             Description = "A blog about technology and programming",
-            Posts = new List<Post>
+            OurSponsor = new Sponsor
             {
-                new Post
-                {
-                    Title = "Introduction to C#",
-                    Content = "C# is a modern, object-oriented programming language...",
-                    Comments = new List<Comment>
-                    {
-                        new Comment {Username = "JaneDoe", Content = "Great post!"},
-                        new Comment {Username = "BobSmith", Content = "Very informative."}
-                    }
-                },
-                new Post
-                {
-                    Title = "Advanced C# Features",
-                    Content = "C# has many advanced features such as LINQ, async/await...",
-                    Comments = new List<Comment>
-                    {
-                        new Comment {Username = "AliceJones", Content = "Thanks for sharing!"},
-                        new Comment {Username = "CharlieBrown", Content = "Can't wait to try these out."}
-                    }
-                }
+                Name = "Microsoft",
+                Description = "Software company making software things",
+                NumberOfAds = 4,
+                CreatedDate = DateTime.UtcNow.AddDays(-5)
+            },
+            AuthorsSponsor = new Sponsor
+            {
+                Name = "Google",
+                Description = "Software company making different software things",
+                NumberOfAds = 2,
+                CreatedDate = DateTime.UtcNow.AddDays(-3)
             }
+            //Posts = new List<Post>
+            //{
+            //    new Post
+            //    {
+            //        Title = "Introduction to C#",
+            //        Content = "C# is a modern, object-oriented programming language...",
+            //        Comments = new List<Comment>
+            //        {
+            //            new Comment {Username = "JaneDoe", Content = "Great post!"},
+            //            new Comment {Username = "BobSmith", Content = "Very informative."}
+            //        }
+            //    },
+            //    new Post
+            //    {
+            //        Title = "Advanced C# Features",
+            //        Content = "C# has many advanced features such as LINQ, async/await...",
+            //        Comments = new List<Comment>
+            //        {
+            //            new Comment {Username = "AliceJones", Content = "Thanks for sharing!"},
+            //            new Comment {Username = "CharlieBrown", Content = "Can't wait to try these out."}
+            //        }
+            //    }
+            //}
         };
         return blog;
     }

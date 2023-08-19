@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -25,20 +27,101 @@ public class PathToModify
 
 public static class QuickJson
 {
+    public static List<Type> TypesToIgnore = new()
+    {
+        typeof(DateTime),
+        typeof(DateTime?),
+        typeof(DateTimeOffset),
+        typeof(DateTimeOffset?),
+        typeof(Guid),
+        typeof(Guid?),
+        typeof(TimeSpan),
+        typeof(TimeSpan?),
+        typeof(string)
+    };
+
+    static JsonSerializerSettings? _defaultSettings = null;
+
     static readonly List<PathToModify> EmptyList = new(); // Order of this list is very important
 
-    public static string SerializeObject(object? objectToSerialize)
+    static readonly Dictionary<Type, List<PathToModify>> KnownTypes = new();
+
+    public static string SerializeObject(object? objectToSerialize, JsonSerializerSettings? settings = null)
     {
         if (objectToSerialize is null)
             return JsonConvert.SerializeObject(objectToSerialize);
 
         var type = objectToSerialize?.GetType();
-        var pathsToModify = GetPathsToModify(type);
-        var jObject = JObject.Parse(JsonConvert.SerializeObject(objectToSerialize));
 
-        var result = UpdateJsonPaths(jObject, pathsToModify);
+        if (settings is null)
+        {
+            if (_defaultSettings is null)
+                _defaultSettings = JsonConvert.DefaultSettings?.Invoke();
+            settings = _defaultSettings;
+        }
 
-        return result.ToString();
+        var pathsToModify = type.GetAllPaths(settings);
+        return "";
+        //var jObject = JObject.Parse(JsonConvert.SerializeObject(objectToSerialize));
+
+        //var result = UpdateJsonPaths(jObject, pathsToModify);
+
+        //return result.ToString();
+    }
+
+    private static Dictionary<string, string> GetAllPaths(this Type type, JsonSerializerSettings? settings)
+    {
+        var paths = new Dictionary<string, string>();
+        foreach (var path in type.GetPathsToModify(settings))
+            paths.Add(path.path, path.newPath);
+
+        return paths;
+    }
+
+    private static IEnumerable<(string path, string newPath)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
+    {
+        var jsonPathAttribute = propertyInfo?.GetCustomAttribute<JsonPathAttribute>();
+        var myNewName = jsonPathAttribute is null ? "" : jsonPathAttribute.Path;
+        if (myNewName.EndsWith("."))
+            myNewName += propertyInfo is null ? "" : propertyInfo.Name;
+
+        if (type.CanHaveSubPaths(settings))
+        {
+            var propertiesToCheck = type.GetProperties();
+
+            // TODO: instead of returning string, return (string string) where the first one is path and the second one is new path
+            //var propertiesWithModifications = propertiesToCheck
+            //    .ToDictionary(p => p, p => p.GetCustomAttribute<JsonPathAttribute>())
+            //    .Where(p => p.Value != null);
+            var myName = propertyInfo is null ? "" : $"{propertyInfo.Name}.";
+            myNewName = myNewName == "" ? myName : $"{myNewName}.";
+            foreach (var property in propertiesToCheck)
+            {
+                foreach (var path in property.PropertyType.GetPathsToModify(settings, property))
+                    yield return ($"{myName}{path.path}", $"{myNewName}{path.newPath}");
+            }
+        }
+        else
+        {
+            var myName = propertyInfo is null ? "" : propertyInfo.Name;
+            yield return (myName, myNewName == "" ? myName : myNewName);
+        }
+    }
+
+    private static bool CanHaveSubPaths(this Type type, JsonSerializerSettings? settings) =>
+        !type.IsPrimitive && !TypesToIgnore.Contains(type) && !type.HasCustomConverter(settings);
+
+    private static bool HasCustomConverter(this Type type, JsonSerializerSettings? settings)
+    {
+        if (settings is null)
+            return false;
+
+        foreach (var converter in settings.Converters)
+        {
+            if (converter.CanConvert(type))
+                return true;
+        }
+        return false;
     }
 
     private static JObject UpdateJsonPaths(JObject jObject, List<PathToModify> pathsToModify)
@@ -131,37 +214,41 @@ public static class QuickJson
         }
     }
 
-    private static List<PathToModify> GetPathsToModify(Type type, string startingPath = "")
-    {
-        if (type.IsPrimitive)
-            return EmptyList;
+    //private static List<PathToModify> GetPathsToModify(Type type, string startingPath = "")
+    //{
+    //    if (type.IsPrimitive || type.IsValueType) // TODO: we need a better solution as otherwise it wont work with any value types, not just built in ones
+    //        return EmptyList;
 
-        var pathsToModify = new List<PathToModify>();
+    //    if (KnownTypes.ContainsKey(type))
+    //        return KnownTypes[type];
 
-        foreach (var property in type.GetProperties())
-            pathsToModify.AddRange(GetPathsToModifyForNonPrimitiveProperty(property, startingPath));
+    //    var pathsToModify = new List<PathToModify>();
 
-        return pathsToModify;
-    }
+    //    foreach (var property in type.GetProperties())
+    //        pathsToModify.AddRange(GetPathsToModifyForNonPrimitiveProperty(property, startingPath));
 
-    private static List<PathToModify> GetPathsToModifyForNonPrimitiveProperty(PropertyInfo property, string currentPath)
-    {
-        var pathsToModify = new List<PathToModify>();
+    //    KnownTypes.Add(type, pathsToModify);
+    //    return pathsToModify;
+    //}
 
-        var jsonPathAttribute = property.GetCustomAttribute<JsonPathAttribute>();
-        if (jsonPathAttribute is null)
-            currentPath += $".{GetJsonPropertyName(property)}";
-        else
-        {
-            var originalPath = $"{currentPath}.{GetJsonPropertyName(property)}";
-            currentPath = jsonPathAttribute.GetPropertyPath(currentPath, property);
+    //private static List<PathToModify> GetPathsToModifyForNonPrimitiveProperty(PropertyInfo property, string currentPath)
+    //{
+    //    var pathsToModify = new List<PathToModify>();
 
-            pathsToModify.Add(new PathToModify { OriginalPath = originalPath[1..], NewPath = currentPath[1..] });
-        }
+    //    var jsonPathAttribute = property.GetCustomAttribute<JsonPathAttribute>();
+    //    if (jsonPathAttribute is null)
+    //        currentPath += $".{GetJsonPropertyName(property)}";
+    //    else
+    //    {
+    //        var originalPath = $"{currentPath}.{GetJsonPropertyName(property)}";
+    //        currentPath = jsonPathAttribute.GetPropertyPath(currentPath, property);
 
-        pathsToModify.AddRange(GetPathsToModify(property.PropertyType, currentPath));
-        return pathsToModify;
-    }
+    //        pathsToModify.Add(new PathToModify { OriginalPath = originalPath[1..], NewPath = currentPath[1..] });
+    //    }
+
+    //    pathsToModify.AddRange(GetPathsToModify(property.PropertyType, currentPath));
+    //    return pathsToModify;
+    //}
 
     private static string GetPropertyPath(this JsonPathAttribute jsonPathAttribute, string currentPath, PropertyInfo property)
     {
