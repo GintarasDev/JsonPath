@@ -27,11 +27,6 @@ public class SerializationTests
         // Arrange
         var blog = CreateTestBlog();
 
-        var flattened = JObject.FromObject(blog)
-            .Descendants()
-            .OfType<JValue>()
-            .ToDictionary(jv => jv.Path, jv => jv.ToString());
-
         // Act
         var result = QuickJson.SerializeObject(blog);
 

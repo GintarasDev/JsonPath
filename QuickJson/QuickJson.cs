@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ public class PathToModify
 {
     public required string OriginalPath;
     public required string NewPath;
+    public bool IsEnumerable = false;
 }
 
 public static class QuickJson
@@ -62,6 +64,12 @@ public static class QuickJson
         }
 
         var pathsToModify = type.GetAllPaths(settings);
+        if (pathsToModify.Any())
+        {
+            var flattenedJson = GetFlattenedJsonDictionary(objectToSerialize);
+            UpdateJsonPaths(flattenedJson, pathsToModify);
+        }
+
         return "";
         //var jObject = JObject.Parse(JsonConvert.SerializeObject(objectToSerialize));
 
@@ -70,19 +78,43 @@ public static class QuickJson
         //return result.ToString();
     }
 
-    private static Dictionary<string, string> GetAllPaths(this Type type, JsonSerializerSettings? settings)
-    {
-        var paths = new Dictionary<string, string>();
-        foreach (var path in type.GetPathsToModify(settings))
-            paths.Add(path.path[1..], path.newPath[1..]);
+    private static Dictionary<string, string> GetFlattenedJsonDictionary(object? objectToSerialize) =>
+        JObject.FromObject(objectToSerialize)
+            .Descendants()
+            .OfType<JValue>()
+            .ToDictionary(v => v.Path, v => v.ToString());
 
-        return paths;
+    private static void UpdateJsonPaths(Dictionary<string, string> jsonDictionary, List<PathToModify> pathsToModify)
+    {
+        foreach(var pathModification in pathsToModify.Where(p => !p.IsEnumerable))
+        {
+            if (jsonDictionary.ContainsKey(pathModification.OriginalPath))
+            {
+                jsonDictionary[pathModification.NewPath] = jsonDictionary[pathModification.OriginalPath];
+                jsonDictionary.Remove(pathModification.OriginalPath);
+            }
+        }
+    }
+
+    private static List<PathToModify> GetAllPaths(this Type type, JsonSerializerSettings? settings)
+    {
+        var pathsToModify = new List<PathToModify>();
+        foreach (var path in type.GetPathsToModify(settings))
+            pathsToModify.Add(new()
+            {
+                OriginalPath = path.path[1..],
+                NewPath = path.newPath[1..],
+                IsEnumerable = path.isEnumerable
+            });
+
+        return pathsToModify;
     }
 
     // No proper support for dictionaries yet
     // No proper support for non generic enumerables
-    private static IEnumerable<(string path, string newPath)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
+    private static IEnumerable<(string path, string newPath, bool isEnumerable)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
     {
+        var isEnumerable = false;
         var myName = propertyInfo is null ? "" : propertyInfo.Name;
 
         var jsonPathAttribute = propertyInfo?.GetCustomAttribute<JsonPathAttribute>();
@@ -96,6 +128,7 @@ public static class QuickJson
             type = type.GetGenericArguments()[0];
             myName += "[*]";
             myNewName += "[*]";
+            isEnumerable = true;
         }
 
         if (type.CanHaveSubPaths(settings))
@@ -111,11 +144,11 @@ public static class QuickJson
             foreach (var property in propertiesToCheck)
             {
                 foreach (var path in property.PropertyType.GetPathsToModify(settings, property))
-                    yield return ($"{myName}{path.path}", $"{myNewName}{path.newPath}");
+                    yield return ($"{myName}{path.path}", $"{myNewName}{path.newPath}", isEnumerable || path.isEnumerable);
             }
         }
         else
-            yield return (myName, myNewName);
+            yield return (myName, myNewName, isEnumerable);
     }
 
     private static bool CanHaveSubPaths(this Type type, JsonSerializerSettings? settings) =>
