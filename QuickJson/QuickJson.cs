@@ -1,27 +1,10 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace QuickJson;
-
-public class JsonProperty
-{
-    public required PropertyInfo Property;
-    public required string[]? Path;
-    public required string? Name;
-}
 
 public class PathToModify
 {
@@ -46,8 +29,6 @@ public static class QuickJson
     };
 
     static JsonSerializerSettings? _defaultSettings = null;
-
-    static readonly List<PathToModify> EmptyList = new(); // Order of this list is very important
 
     static readonly Dictionary<Type, List<PathToModify>> KnownTypes = new();
 
@@ -88,7 +69,7 @@ public static class QuickJson
 
     private static void UpdateJsonPaths(Dictionary<string, string> jsonDictionary, List<PathToModify> pathsToModify)
     {
-        foreach(var pathModification in pathsToModify.Where(p => !p.IsEnumerable))
+        foreach (var pathModification in pathsToModify.Where(p => !p.IsEnumerable))
         {
             if (jsonDictionary.ContainsKey(pathModification.OriginalPath))
             {
