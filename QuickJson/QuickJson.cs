@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -65,9 +66,7 @@ public static class QuickJson
     public static string SerializeObject(object? objectToSerialize, JsonSerializerSettings? settings = null)
     {
         if (objectToSerialize is null)
-            return JsonConvert.SerializeObject(objectToSerialize);
-
-        var type = objectToSerialize?.GetType();
+            return JsonConvert.SerializeObject(objectToSerialize, settings);
 
         if (settings is null)
         {
@@ -76,19 +75,77 @@ public static class QuickJson
             settings = _defaultSettings;
         }
 
+        var type = objectToSerialize?.GetType();
         var pathsToModify = type.GetAllPathsToModify(settings);
         if (pathsToModify.Any())
-        {
+        { 
             var flattenedJson = GetFlattenedJsonDictionary(objectToSerialize);
             UpdateJsonPaths(flattenedJson, pathsToModify);
+            var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
+            return JsonConvert.SerializeObject(deepStructure, settings);
         }
 
-        return "";
-        //var jObject = JObject.Parse(JsonConvert.SerializeObject(objectToSerialize));
+        return JsonConvert.SerializeObject(objectToSerialize, settings);
+    }
 
-        //var result = UpdateJsonPaths(jObject, pathsToModify);
+    // TODO: refactor this
+    private static Dictionary<string, object> GenerateDeepObjectsStructure(Dictionary<string, string> jsonDictionary)
+    {
+        var root = new Dictionary<string, object>();
+        foreach (var keyValuePair in jsonDictionary)
+        {
+            // Split the key into its parts
+            var keyParts = Regex.Split(keyValuePair.Key, @"(?<=[\w\]])\.");
+            var current = root;
+            for (int i = 0; i < keyParts.Length; i++)
+            {
+                var part = keyParts[i];
+                // Check if the part represents an indexed element in a list
+                if (TryGetListIndex(part, out string listName, out int index))
+                {
+                    // Ensure that the current dictionary contains a list with this name
+                    if (!current.ContainsKey(listName))
+                        current.Add(listName, new List<Dictionary<string, object>>());
+                    var list = (List<Dictionary<string, object>>)current[listName];
+                    // Ensure that the list has enough elements to include the specified index
+                    while (list.Count <= index)
+                        list.Add(new Dictionary<string, object>());
+                    current = list[index];
+                }
+                else
+                {
+                    // Check if this is the last part of the key
+                    if (i == keyParts.Length - 1)
+                        current.Add(part, keyValuePair.Value);
+                    else
+                    {
+                        // Ensure that the current dictionary contains a dictionary with this name
+                        if (!current.ContainsKey(part))
+                            current.Add(part, new Dictionary<string, object>());
+                        current = (Dictionary<string, object>)current[part];
+                    }
+                }
+            }
+        }
 
-        //return result.ToString();
+        return root;
+    }
+
+    private static bool TryGetListIndex(string part, out string listName, out int index)
+    {
+        var match = Regex.Match(part, @"(.+)\[(\d+)\]$");
+        if (match.Success)
+        {
+            listName = match.Groups[1].Value;
+            index = int.Parse(match.Groups[2].Value);
+            return true;
+        }
+        else
+        {
+            listName = null;
+            index = -1;
+            return false;
+        }
     }
 
     private static Dictionary<string, string> GetFlattenedJsonDictionary(object? objectToSerialize) =>
