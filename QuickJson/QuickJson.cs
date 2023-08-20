@@ -81,7 +81,7 @@ public static class QuickJson
         var pathsToModify = type.GetAllPathsToModify(settings);
         if (pathsToModify.Any())
         {
-            var flattenedJson = GetFlattenedJsonDictionary(objectToSerialize);
+            var flattenedJson = GetFlattenedJsonDictionaryFromObject(objectToSerialize!);
             UpdateJsonPaths(flattenedJson, pathsToModify);
             var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
             return JsonConvert.SerializeObject(deepStructure, settings);
@@ -89,6 +89,43 @@ public static class QuickJson
 
         return JsonConvert.SerializeObject(objectToSerialize, settings);
     }
+
+    public static T? DeserializeObject<T>(string json, JsonSerializerSettings? settings = null) where T : new()
+    {
+        if (string.IsNullOrEmpty(json))
+            return JsonConvert.DeserializeObject<T>(json, settings);
+
+        if (settings is null)
+        {
+            if (_defaultSettings is null)
+                _defaultSettings = JsonConvert.DefaultSettings?.Invoke();
+            settings = _defaultSettings;
+        }
+
+        var type = typeof(T);
+        var pathsToModify = type.GetAllPathsToModify(settings);
+        if (pathsToModify.Any())
+        {
+            var flattenedJson = GetFlattenedJsonDictionaryFromJson(json);
+            UpdateJsonPaths(flattenedJson, pathsToModify, isInverted: true);
+            var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
+            var remappedJson = JsonConvert.SerializeObject(deepStructure, settings);
+            return JsonConvert.DeserializeObject<T>(remappedJson);
+        }
+
+        return JsonConvert.DeserializeObject<T>(json);
+    }
+
+    private static Dictionary<string, string> GetFlattenedJsonDictionaryFromObject(object objectToSerialize) =>
+        ToFlattenedJsonDictionary(JObject.FromObject(objectToSerialize));
+
+    private static Dictionary<string, string> GetFlattenedJsonDictionaryFromJson(string json) =>
+        ToFlattenedJsonDictionary(JObject.Parse(json));
+
+    private static Dictionary<string, string> ToFlattenedJsonDictionary(JObject jObject) =>
+        jObject.Descendants()
+            .OfType<JValue>()
+            .ToDictionary(v => v.Path, v => v.ToString());
 
     private static Dictionary<string, object> GenerateDeepObjectsStructure(Dictionary<string, string> jsonDictionary)
     {
@@ -165,30 +202,39 @@ public static class QuickJson
         }
     }
 
-    private static Dictionary<string, string> GetFlattenedJsonDictionary(object? objectToSerialize) =>
-        JObject.FromObject(objectToSerialize)
-            .Descendants()
-            .OfType<JValue>()
-            .ToDictionary(v => v.Path, v => v.ToString());
-
-    private static void UpdateJsonPaths(Dictionary<string, string> jsonDictionary, List<PathToModify> pathsToModify)
+    private static void UpdateJsonPaths(Dictionary<string, string> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
     {
+        var originalPath = "";
+        var newPath = "";
         foreach (var pathModification in pathsToModify.Where(p => !p.IsEnumerable))
         {
-            if (jsonDictionary.ContainsKey(pathModification.OriginalPath))
+            if (isInverted)
             {
-                jsonDictionary[pathModification.NewPath] = jsonDictionary[pathModification.OriginalPath];
-                jsonDictionary.Remove(pathModification.OriginalPath);
+                originalPath = pathModification.NewPath;
+                newPath = pathModification.OriginalPath;
             }
-        }
-
-        foreach (var pathModification in pathsToModify.Where(p => p.IsEnumerable))
-        {
-            foreach (var matchingPath in GetMatchingEnumerablePaths(jsonDictionary, pathModification.OriginalPath))
+            else
             {
-                var newPath = PrepareNewIEnumerablePath(matchingPath, pathModification.NewPath);
-                jsonDictionary[newPath] = jsonDictionary[matchingPath];
-                jsonDictionary.Remove(matchingPath);
+                originalPath = pathModification.OriginalPath;
+                newPath = pathModification.NewPath;
+            }
+
+            if (pathModification.IsEnumerable)
+            {
+                foreach (var matchingPath in GetMatchingEnumerablePaths(jsonDictionary, originalPath))
+                {
+                    var newIEnumerablePath = PrepareNewIEnumerablePath(matchingPath, newPath);
+                    jsonDictionary[newIEnumerablePath] = jsonDictionary[matchingPath];
+                    jsonDictionary.Remove(matchingPath);
+                }
+            }
+            else
+            {
+                if (jsonDictionary.ContainsKey(originalPath))
+                {
+                    jsonDictionary[newPath] = jsonDictionary[originalPath];
+                    jsonDictionary.Remove(originalPath);
+                }
             }
         }
     }
@@ -289,10 +335,5 @@ public static class QuickJson
                 return true;
         }
         return false;
-    }
-
-    public static T DeserializeObject<T>(string json) where T : new()
-    {
-        return JsonConvert.DeserializeObject<T>(json);
     }
 }
