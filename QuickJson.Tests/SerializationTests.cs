@@ -43,6 +43,20 @@ public class SerializationTests
             UserId = Guid.NewGuid(),
             Username = "JohnDoe",
             Description = "A blog about technology and programming",
+            OurSponsor = new Sponsor
+            {
+                Name = "Microsoft",
+                Description = "Software company making software things",
+                NumberOfAds = 4,
+                CreatedDate = DateTime.UtcNow.AddDays(-5)
+            },
+            AuthorsSponsor = new Sponsor
+            {
+                Name = "Google",
+                Description = "Software company making different software things",
+                NumberOfAds = 2,
+                CreatedDate = DateTime.UtcNow.AddDays(-3)
+            },
             Posts = new List<PostSimple>
             {
                 new PostSimple
