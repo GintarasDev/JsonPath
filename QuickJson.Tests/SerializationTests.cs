@@ -7,6 +7,8 @@ using System;
 namespace QuickJson.Tests;
 
 // TODO: numbers are serialized with "" (quotes) in current solution
+// - created Numerics and NumericsSimple classes for writting tests
+// TODO: deserialization tests
 
 public class SerializationTests
 {
