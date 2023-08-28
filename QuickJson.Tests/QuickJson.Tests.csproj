@@ -25,4 +25,14 @@
     <ProjectReference Include="..\QuickJson\QuickJson.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ExpectedSerializationResults\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ExpectedSerializationResults\SerializationWithAttributesResult.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

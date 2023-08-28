@@ -2,17 +2,27 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QuickJson.Tests.TestingClasses;
 using QuickJson.Tests.TestingClasses.WithoutAttributes;
+using System;
 
 namespace QuickJson.Tests;
 
+// TODO: numbers are serialized with "" (quotes) in current solution
+
 public class SerializationTests
 {
+    private const string BlogId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    private const string AuthorId = "11111111-2222-3333-4444-555555555555";
+
+    private static readonly DateTime AuthorSponsorCreatedDate = new DateTime(2025, 4, 11, 7, 23, 31);
+    private static readonly DateTime OurSponsorCreatedDate = new DateTime(2031, 5, 17, 12, 15, 5);
+
     [Fact]
     public void Serialize_WithoutJsonPathAttributes_DoesNotInterfareWithNewtonsoftJson()
     {
         // Arrange
         var blog = CreateTestBlogWithoutAttributes();
-        var newtonsoftResult = JsonConvert.SerializeObject(blog);
+        var settings = JsonConvert.DefaultSettings?.Invoke();
+        var newtonsoftResult = JsonConvert.SerializeObject(blog, settings);
 
         // Act
         var result = QuickJson.SerializeObject(blog);
@@ -22,40 +32,51 @@ public class SerializationTests
     }
 
     [Fact]
-    public void Serialize_WithJsonPathAttributes_FollowsProvidedPaths()
+    public async Task Serialize_WithJsonPathAttributes_FollowsProvidedPaths()
     {
         // Arrange
         var blog = CreateTestBlog();
+        var expectedJson = await GetJsonFromTestFile("SerializationWithAttributesResult");
 
         // Act
         var serializationResult = QuickJson.SerializeObject(blog);
-        var deserializationResult = QuickJson.DeserializeObject<Blog>(serializationResult);
-        
+        //var deserializationResult = QuickJson.DeserializeObject<Blog>(serializationResult);
+
         // Assert
-        //Assert.Equal("{\r\n  \"BlogId\": \"25609f46-3ea8-41a1-9d0c-931d272a542b\",\r\n  \"Author\": {\r\n    \"Id\": \"995c1dd6-ad73-4546-a22d-6279a9770d02\",\r\n    \"Name\": \"JohnDoe\",\r\n    \"Description\": \"A blog about technology and programming\"\r\n  }\r\n}", result);
+        Assert.Equal(RemoveFormattingAndSpaces(expectedJson), RemoveFormattingAndSpaces(serializationResult));
+        Assert.True(IsJsonEqual(expectedJson, serializationResult));
     }
+
+    private static bool IsJsonEqual(string jsonA, string jsonB) =>
+        JToken.DeepEquals(JObject.Parse(jsonA), JObject.Parse(jsonB));
+
+    private static string RemoveFormattingAndSpaces(string json) =>
+        json.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+
+    private static async Task<string> GetJsonFromTestFile(string filename) =>
+        await File.ReadAllTextAsync($"./ExpectedSerializationResults/{filename}.json");
 
     private static BlogSimple CreateTestBlogWithoutAttributes()
     {
         var blog = new BlogSimple
         {
-            BlogId = Guid.NewGuid(),
-            UserId = Guid.NewGuid(),
+            BlogId = new Guid(BlogId),
+            UserId = new Guid(AuthorId),
             Username = "JohnDoe",
             Description = "A blog about technology and programming",
-            OurSponsor = new Sponsor
+            OurSponsor = new SponsorSimple
             {
                 Name = "Microsoft",
                 Description = "Software company making software things",
                 NumberOfAds = 4,
-                CreatedDate = DateTime.UtcNow.AddDays(-5)
+                CreatedDate = OurSponsorCreatedDate
             },
-            AuthorsSponsor = new Sponsor
+            AuthorsSponsor = new SponsorSimple
             {
                 Name = "Google",
                 Description = "Software company making different software things",
                 NumberOfAds = 2,
-                CreatedDate = DateTime.UtcNow.AddDays(-3)
+                CreatedDate = AuthorSponsorCreatedDate
             },
             Posts = new List<PostSimple>
             {
@@ -88,8 +109,8 @@ public class SerializationTests
     {
         var blog = new Blog
         {
-            BlogId = Guid.NewGuid(),
-            UserId = Guid.NewGuid(),
+            BlogId = new Guid(BlogId),
+            UserId = new Guid(AuthorId),
             Username = "JohnDoe",
             Description = "A blog about technology and programming",
             OurSponsor = new Sponsor
@@ -97,14 +118,14 @@ public class SerializationTests
                 Name = "Microsoft",
                 Description = "Software company making software things",
                 NumberOfAds = 4,
-                CreatedDate = DateTime.UtcNow.AddDays(-5)
+                CreatedDate = OurSponsorCreatedDate
             },
             AuthorsSponsor = new Sponsor
             {
                 Name = "Google",
                 Description = "Software company making different software things",
                 NumberOfAds = 2,
-                CreatedDate = DateTime.UtcNow.AddDays(-3)
+                CreatedDate = AuthorSponsorCreatedDate
             },
             Posts = new List<Post>
             {
