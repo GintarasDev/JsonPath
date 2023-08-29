@@ -1,0 +1,16 @@
+{
+    "UShort": 41,
+    "Short": -6,
+    "UInt": 42,
+    "Int": 75,
+    "ULong": 589,
+    "Long": -9754516,
+    "FloatingPoint": {
+        "Single": 93.45721,
+        "Double": 31.842,
+        "ButBetter": {
+            "Decimal": 2899.9871
+        }
+    },
+    "StringWithNumericValue": "2899.9871"
+}

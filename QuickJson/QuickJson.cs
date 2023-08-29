@@ -1,9 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel.Design.Serialization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -58,7 +55,9 @@ public static class QuickJson
         typeof(Guid?),
         typeof(TimeSpan),
         typeof(TimeSpan?),
-        typeof(string)
+        typeof(string),
+        typeof(decimal),
+        typeof(decimal?),
     };
 
     static JsonSerializerSettings? _defaultSettings = null;
@@ -116,18 +115,18 @@ public static class QuickJson
         return JsonConvert.DeserializeObject<T>(json);
     }
 
-    private static Dictionary<string, string> GetFlattenedJsonDictionaryFromObject(object objectToSerialize) =>
+    private static Dictionary<string, object?> GetFlattenedJsonDictionaryFromObject(object objectToSerialize) =>
         ToFlattenedJsonDictionary(JObject.FromObject(objectToSerialize));
 
-    private static Dictionary<string, string> GetFlattenedJsonDictionaryFromJson(string json) =>
+    private static Dictionary<string, object?> GetFlattenedJsonDictionaryFromJson(string json) =>
         ToFlattenedJsonDictionary(JObject.Parse(json));
 
-    private static Dictionary<string, string> ToFlattenedJsonDictionary(JObject jObject) =>
+    private static Dictionary<string, object?> ToFlattenedJsonDictionary(JObject jObject) =>
         jObject.Descendants()
             .OfType<JValue>()
-            .ToDictionary(v => v.Path, v => v.ToString());
+            .ToDictionary(v => v.Path, v => v.Value);
 
-    private static Dictionary<string, object> GenerateDeepObjectsStructure(Dictionary<string, string> jsonDictionary)
+    private static Dictionary<string, object> GenerateDeepObjectsStructure(Dictionary<string, object?> jsonDictionary)
     {
         var root = new Dictionary<string, object>();
         foreach (var keyValuePair in jsonDictionary)
@@ -136,7 +135,7 @@ public static class QuickJson
         return root;
     }
 
-    private static void ConvertKeyValuePairIntoDeepObjectStructure(KeyValuePair<string, string> keyValuePair, Dictionary<string, object> root)
+    private static void ConvertKeyValuePairIntoDeepObjectStructure(KeyValuePair<string, object?> keyValuePair, Dictionary<string, object> root)
     {
         // Split the key into its parts
         var pathParts = keyValuePair.Key.Split('.');
@@ -153,11 +152,11 @@ public static class QuickJson
     }
 
     private static Dictionary<string, object> AddElement(
-        Dictionary<string, object> current,
+        Dictionary<string, object?> current,
         string[] pathParts,
         string part,
         int currentPathPartIndex,
-        KeyValuePair<string, string> keyValuePair)
+        KeyValuePair<string, object?> keyValuePair)
     {
         // Check if this is the last part of the key
         if (currentPathPartIndex == pathParts.Length - 1)
@@ -166,8 +165,8 @@ public static class QuickJson
         {
             // Ensure that the current dictionary contains a dictionary with this name
             if (!current.ContainsKey(part))
-                current.Add(part, new Dictionary<string, object>());
-            current = (Dictionary<string, object>)current[part];
+                current.Add(part, new Dictionary<string, object?>());
+            current = (Dictionary<string, object?>)current[part];
         }
 
         return current;
@@ -202,7 +201,7 @@ public static class QuickJson
         }
     }
 
-    private static void UpdateJsonPaths(Dictionary<string, string> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
+    private static void UpdateJsonPaths(Dictionary<string, object?> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
     {
         var originalPath = "";
         var newPath = "";
@@ -259,7 +258,7 @@ public static class QuickJson
         return matches.Select(m => int.Parse(m.Groups[1].Value)).ToArray();
     }
 
-    private static string[] GetMatchingEnumerablePaths(Dictionary<string, string> jsonDictionary, string path)
+    private static string[] GetMatchingEnumerablePaths(Dictionary<string, object> jsonDictionary, string path)
     {
         var template = path.Replace("[*]", @"\[\d+\]\");
         return jsonDictionary.Keys.Where(key => Regex.IsMatch(key, template)).ToArray();
@@ -295,7 +294,7 @@ public static class QuickJson
         var myNewName = jsonPathAttribute is null ? myName : jsonPathAttribute.Path;
 
         if (myNewName.EndsWith("."))
-            myNewName += propertyInfo is null ? "" : propertyInfo.Name;
+            myNewName += propertyInfo is null ? "WTF_JUST_HAPPENED" : propertyInfo.Name; // TODO: Update
 
         if (type.IsAssignableTo(typeof(IEnumerable)) && type.IsGenericType)
         {

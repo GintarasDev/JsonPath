@@ -6,22 +6,22 @@
         "Sponsor": {
             "Name": "Google",
             "Description": "Software company making different software things",
-            "NumberOfAds": "2",
-            "Metadata": { "SponsorSince": "4/11/2025 7:23:31 AM" }
+            "NumberOfAds": 2,
+            "Metadata": { "SponsorSince": "2025-04-11T07:23:31" }
         },
         "Id": "11111111-2222-3333-4444-555555555555"
     },
     "Sponsor": {
         "Name": "Microsoft",
         "Description": "Software company making software things",
-        "NumberOfAds": "4",
-        "Metadata": { "SponsorSince": "5/17/2031 12:15:05 PM" }
+        "NumberOfAds": 4,
+        "Metadata": { "SponsorSince": "2031-05-17T12:15:05" }
     },
     "Posts": [
         {
             "Title": "Introduction to C#",
             "Content": "C# is a modern, object-oriented programming language...",
-            "CreatedDate": "1/1/0001 12:00:00 AM",
+            "CreatedDate": "0001-01-01T00:00:00",
             "Comments": [
                 {
                     "Username": "JaneDoe",
@@ -36,7 +36,7 @@
         {
             "Title": "Advanced C# Features",
             "Content": "C# has many advanced features such as LINQ, async/await...",
-            "CreatedDate": "1/1/0001 12:00:00 AM",
+            "CreatedDate": "0001-01-01T00:00:00",
             "Comments": [
                 {
                     "Username": "AliceJones",

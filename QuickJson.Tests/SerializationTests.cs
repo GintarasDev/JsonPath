@@ -6,8 +6,6 @@ using System;
 
 namespace QuickJson.Tests;
 
-// TODO: numbers are serialized with "" (quotes) in current solution
-// - created Numerics and NumericsSimple classes for writting tests
 // TODO: deserialization tests
 
 public class SerializationTests
@@ -46,6 +44,20 @@ public class SerializationTests
 
         // Assert
         Assert.Equal(RemoveFormattingAndSpaces(expectedJson), RemoveFormattingAndSpaces(serializationResult));
+        Assert.True(IsJsonEqual(expectedJson, serializationResult));
+    }
+
+    [Fact]
+    public async Task Serialize_WithJsonPathAttributes_SerializesNumbersWithoutQuotes()
+    {
+        // Arrange
+        var numerics = new Numerics();
+        var expectedJson = await GetJsonFromTestFile("NumericsWithAttributesResult");
+
+        // Act
+        var serializationResult = QuickJson.SerializeObject(numerics);
+
+        // Assert
         Assert.True(IsJsonEqual(expectedJson, serializationResult));
     }
 
