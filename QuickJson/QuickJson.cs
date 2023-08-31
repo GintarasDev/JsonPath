@@ -13,36 +13,6 @@ public class PathToModify
     public bool IsEnumerable = false;
 }
 
-// TODO: we need to be able to convert this to json:
-/*
-BlogId
-Author.Id
-Author.Name
-Author.Description
-Sponsor.Name
-Sponsor.Description
-Sponsor.NumberOfAds
-Sponsor.Metadata.SponsorSince
-Author.Sponsor.Name
-Author.Sponsor.Description
-Author.Sponsor.NumberOfAds
-Author.Sponsor.Metadata.SponsorSince
-Articles[0].Title
-Articles[1].Title
-Articles[1].Content
-Articles[1].Metadata.PublishedOn
-Articles[0].Comments[1].Author.Name
-Articles[0].Comments[1].Content
-Articles[1].Comments[0].Author.Name
-Articles[1].Comments[0].Content
-Articles[0].Content
-Articles[0].Metadata.PublishedOn,
-Articles[0].Comments[0].Author.Name
-Articles[1].Comments[1].Author.Name
-Articles[1].Comments[1].Content
-Articles[0].Comments[0].Content
-*/
-
 public static class QuickJson
 {
     public static List<Type> TypesToIgnore = new()
@@ -60,9 +30,14 @@ public static class QuickJson
         typeof(decimal?),
     };
 
-    static JsonSerializerSettings? _defaultSettings = null;
+    private static JsonSerializerSettings? _defaultSettings = null;
 
-    static readonly Dictionary<Type, List<PathToModify>> KnownTypes = new();
+    private static readonly Dictionary<Type, List<PathToModify>> KnownTypes = new();
+
+    public static void ClearCache()
+    {
+        KnownTypes.Clear();
+    }
 
     public static string SerializeObject(object? objectToSerialize, JsonSerializerSettings? settings = null)
     {
@@ -266,6 +241,9 @@ public static class QuickJson
 
     private static List<PathToModify> GetAllPathsToModify(this Type type, JsonSerializerSettings? settings)
     {
+        if (KnownTypes.ContainsKey(type))
+            return KnownTypes[type];
+
         var pathsToModify = new List<PathToModify>();
         foreach (var path in type.GetPathsToModify(settings))
         {
@@ -280,6 +258,7 @@ public static class QuickJson
             });
         }
 
+        KnownTypes.TryAdd(type, pathsToModify);
         return pathsToModify;
     }
 

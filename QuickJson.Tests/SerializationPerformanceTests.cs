@@ -5,7 +5,45 @@ namespace QuickJson.Tests;
 
 public class SerializationPerformanceTests
 {
-    private const int NumberOfTestingIterations = 5000;
+    private const int NumberOfTestingIterations = 20000;
+
+    [Fact]
+    public void Serialize_WithCustomPathsResetingCache_PerformsWell()
+    {
+        // Arrange
+        var blog = Helpers.CreateTestBlog();
+
+        // Act
+        var sw = Stopwatch.StartNew();
+        for (var i = 0; i < NumberOfTestingIterations; i++)
+        {
+            QuickJson.ClearCache();
+            QuickJson.SerializeObject(blog);
+        }
+        sw.Stop();
+
+        // Assert
+        Assert.Fail($"Paths Results: {sw.ElapsedMilliseconds / NumberOfTestingIterations}ms, {sw.ElapsedTicks / NumberOfTestingIterations}ticks");
+    }
+
+    [Fact]
+    public void Serialize_WithCustomPathsIgnoringInitialCaching_PerformsWell()
+    {
+        // Arrange
+        var blog = Helpers.CreateTestBlog();
+        QuickJson.SerializeObject(blog); // Make sure type is cached
+
+        // Act
+        var sw = Stopwatch.StartNew();
+        for (var i = 0; i < NumberOfTestingIterations; i++)
+        {
+            QuickJson.SerializeObject(blog);
+        }
+        sw.Stop();
+
+        // Assert
+        Assert.Fail($"Paths Results: {sw.ElapsedMilliseconds / NumberOfTestingIterations}ms, {sw.ElapsedTicks / NumberOfTestingIterations}ticks");
+    }
 
     [Fact]
     public void Serialize_WithCustomPaths_PerformsWell()
