@@ -1,0 +1,52 @@
+{
+    "BlogId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "Author": {
+        "Name": "JohnDoe",
+        "Description": "A blog about technology and programming",
+        "Sponsor": {
+            "Name": "Google",
+            "Description": "Software company making different software things",
+            "NumberOfAds": 2,
+            "Metadata": { "SponsorSince": "2025-04-11T07:23:31" }
+        },
+        "Id": "11111111-2222-3333-4444-555555555555"
+    },
+    "Sponsor": {
+        "Name": "Microsoft",
+        "Description": "Software company making software things",
+        "NumberOfAds": 4,
+        "Metadata": { "SponsorSince": "2031-05-17T12:15:05" }
+    },
+    "Posts": [
+        {
+            "Title": "Introduction to C#",
+            "Content": "C# is a modern, object-oriented programming language...",
+            "CreatedDate": "0001-01-01T00:00:00",
+            "Comments": [
+                {
+                    "Username": "JaneDoe",
+                    "Content": "Great post!"
+                },
+                {
+                    "Username": "BobSmith",
+                    "Content": "Very informative."
+                }
+            ]
+        },
+        {
+            "Title": "Advanced C# Features",
+            "Content": "C# has many advanced features such as LINQ, async/await...",
+            "CreatedDate": "0001-01-01T00:00:00",
+            "Comments": [
+                {
+                    "Username": "AliceJones",
+                    "Content": "Thanks for sharing!"
+                },
+                {
+                    "Username": "CharlieBrown",
+                    "Content": "Can't wait to try these out."
+                }
+            ]
+        }
+    ]
+}

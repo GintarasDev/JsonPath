@@ -2,7 +2,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QuickJson.Tests.TestingClasses;
 using QuickJson.Tests.TestingClasses.WithoutAttributes;
-using System;
 
 namespace QuickJson.Tests;
 
@@ -40,7 +39,6 @@ public class SerializationTests
 
         // Act
         var serializationResult = QuickJson.SerializeObject(blog);
-        //var deserializationResult = QuickJson.DeserializeObject<Blog>(serializationResult);
 
         // Assert
         Assert.Equal(RemoveFormattingAndSpaces(expectedJson), RemoveFormattingAndSpaces(serializationResult));
@@ -59,6 +57,98 @@ public class SerializationTests
 
         // Assert
         Assert.True(IsJsonEqual(expectedJson, serializationResult));
+    }
+
+    [Fact]
+    public async Task Deserialize_WithoutJsonPathAttributes_DoesNotInterfareWithNewtonsoftJson()
+    {
+        // Arrange
+        var expectedBlog = CreateTestBlogWithoutAttributes();
+        var json = await GetJsonFromTestFile("BlockSimpleSerialized");
+
+        // Act
+        var blog = QuickJson.DeserializeObject<BlogSimple>(json);
+
+        // Assert
+        Assert.NotNull(blog);
+        Assert.Equal(expectedBlog.BlogId, blog.BlogId);
+        Assert.Equal(expectedBlog.UserId, blog.UserId);
+        Assert.Equal(expectedBlog.Username, blog.Username);
+        Assert.Equal(expectedBlog.Description, blog.Description);
+        AssertSponsorSimpleEquals(expectedBlog.OurSponsor, blog.OurSponsor);
+        AssertSponsorSimpleEquals(expectedBlog.AuthorsSponsor, blog.AuthorsSponsor);
+        Assert.Equal(expectedBlog.Posts.Count, blog.Posts.Count);
+        for (var i = 0; i < blog.Posts.Count; i++)
+            AssertPostSimpleEquals(expectedBlog.Posts[i], blog.Posts[i]);
+    }
+
+    [Fact]
+    public async Task Deserialize_WithJsonPathAttributes_DeserializesUsingProvidedPaths()
+    {
+        // Arrange
+        var expectedBlog = CreateTestBlog();
+        var json = await GetJsonFromTestFile("BlockSerialized");
+
+        // Act
+        var blog = QuickJson.DeserializeObject<Blog>(json);
+
+        // Assert
+        Assert.NotNull(blog);
+        Assert.Equal(expectedBlog.BlogId, blog.BlogId);
+        Assert.Equal(expectedBlog.UserId, blog.UserId);
+        Assert.Equal(expectedBlog.Username, blog.Username);
+        Assert.Equal(expectedBlog.Description, blog.Description);
+        AssertSponsorEquals(expectedBlog.OurSponsor, blog.OurSponsor);
+        AssertSponsorEquals(expectedBlog.AuthorsSponsor, blog.AuthorsSponsor);
+        Assert.Equal(expectedBlog.Posts.Count, blog.Posts.Count);
+        for (var i = 0; i < blog.Posts.Count; i++)
+            AssertPostEquals(expectedBlog.Posts[i], blog.Posts[i]);
+    }
+
+    private void AssertPostEquals(Post expected, Post actual)
+    {
+        Assert.Equal(expected.Title, actual.Title);
+        Assert.Equal(expected.Content, actual.Content);
+        Assert.Equal(expected.Comments.Count, actual.Comments.Count);
+        for (var i = 0; i < expected.Comments.Count; i++)
+            AssertCommentEquals(expected.Comments[i], actual.Comments[i]);
+    }
+
+    private void AssertPostSimpleEquals(PostSimple expected, PostSimple actual)
+    {
+        Assert.Equal(expected.Title, actual.Title);
+        Assert.Equal(expected.Content, actual.Content);
+        Assert.Equal(expected.Comments.Count, actual.Comments.Count);
+        for (var i = 0; i < expected.Comments.Count; i++)
+            AssertCommentSimpleEquals(expected.Comments[i], actual.Comments[i]);
+    }
+
+    private void AssertCommentEquals(Comment expected, Comment actual)
+    {
+        Assert.Equal(expected.Username, actual.Username);
+        Assert.Equal(expected.Content, actual.Content);
+    }
+
+    private void AssertCommentSimpleEquals(CommentSimple expected, CommentSimple actual)
+    {
+        Assert.Equal(expected.Username, actual.Username);
+        Assert.Equal(expected.Content, actual.Content);
+    }
+
+    private void AssertSponsorEquals(Sponsor expected, Sponsor actual)
+    {
+        Assert.Equal(expected.Name, actual.Name);
+        Assert.Equal(expected.Description, actual.Description);
+        Assert.Equal(expected.CreatedDate, actual.CreatedDate);
+        Assert.Equal(expected.NumberOfAds, actual.NumberOfAds);
+    }
+
+    private void AssertSponsorSimpleEquals(SponsorSimple expected, SponsorSimple actual)
+    {
+        Assert.Equal(expected.Name, actual.Name);
+        Assert.Equal(expected.Description, actual.Description);
+        Assert.Equal(expected.CreatedDate, actual.CreatedDate);
+        Assert.Equal(expected.NumberOfAds, actual.NumberOfAds);
     }
 
     private static bool IsJsonEqual(string jsonA, string jsonB) =>
