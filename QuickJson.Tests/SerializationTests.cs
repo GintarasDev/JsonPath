@@ -5,8 +5,6 @@ using QuickJson.Tests.TestingClasses.WithoutAttributes;
 
 namespace QuickJson.Tests;
 
-// TODO: deserialization tests
-
 public class SerializationTests
 {
     private const string BlogId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
