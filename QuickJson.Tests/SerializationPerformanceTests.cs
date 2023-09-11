@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using QuickJson.Tests.TestingClasses;
 using System.Diagnostics;
 
 namespace QuickJson.Tests;
@@ -6,40 +7,57 @@ namespace QuickJson.Tests;
 public class SerializationPerformanceTests
 {
     private const int NumberOfTestingIterations = 25000;
-    private const int NumberOfBatches = 5;
+    private const int AcceptableDifferenceMultiplier = 24;
+    private const float AcceptableDifferenceWithoutAttributesMultiplier = 1.1f;
 
     [Fact]
-    public void Serialize_WithCustomPathsIgnoringInitialCaching_PerformsAcceptibly()
+    public void Serialize_WithCustomPaths_PerformsAcceptibly()
     {
         // Arrange
         var blog = Helpers.CreateTestBlog();
-        var blogWithoutAttributes = Helpers.CreateTestBlogWithoutAttributes();
         _ = QuickJson.SerializeObject(blog); // Make sure type is cached
 
         Warmup();
+        var elapsedTicksNewtonsoftJson = GetAverageSpeed(() => JsonConvert.SerializeObject(blog));
 
         // Act
-        var sw = Stopwatch.StartNew();
-        for (var i = 0; i < NumberOfTestingIterations; i++)
-        {
-            QuickJson.SerializeObject(blog);
-        }
-        sw.Stop();
-        var elapsedTicksQuickJson = sw.ElapsedTicks / NumberOfTestingIterations;
-
-        sw = Stopwatch.StartNew();
-        for (var i = 0; i < NumberOfTestingIterations; i++)
-        {
-            JsonConvert.SerializeObject(blogWithoutAttributes);
-        }
-        sw.Stop();
-        var elapsedTicksNewtonsoftJson = sw.ElapsedTicks / NumberOfTestingIterations;
+        var elapsedTicksQuickJson = GetAverageSpeed(() => QuickJson.SerializeObject(blog));
 
         // Assert
         Assert.True(
-            elapsedTicksNewtonsoftJson * 24 >= elapsedTicksQuickJson,
+            elapsedTicksNewtonsoftJson * AcceptableDifferenceMultiplier >= elapsedTicksQuickJson,
             $"NewtonsonJson took: {elapsedTicksNewtonsoftJson} ticks\n" +
             $"QuickJson took: {elapsedTicksQuickJson} ticks");
+    }
+
+    [Fact]
+    public void Serialize_WithoutCustomPaths_PerformsWell()
+    {
+        // Arrange
+        var blog = Helpers.CreateTestBlogWithoutAttributes();
+        _ = QuickJson.SerializeObject(blog); // Make sure type is cached
+
+        Warmup();
+        var elapsedTicksNewtonsoftJson = GetAverageSpeed(() => JsonConvert.SerializeObject(blog));
+
+        // Act
+        var elapsedTicksQuickJson = GetAverageSpeed(() => QuickJson.SerializeObject(blog));
+
+        // Assert
+        Assert.True(
+            elapsedTicksNewtonsoftJson * AcceptableDifferenceWithoutAttributesMultiplier >= elapsedTicksQuickJson,
+            $"NewtonsonJson took: {elapsedTicksNewtonsoftJson} ticks\n" +
+            $"QuickJson took: {elapsedTicksQuickJson} ticks");
+    }
+
+    private long GetAverageSpeed(Action action)
+    {
+        var sw = Stopwatch.StartNew();
+        for (var i = 0; i < NumberOfTestingIterations; i++)
+            action();
+        sw.Stop();
+
+        return sw.ElapsedTicks / NumberOfTestingIterations;
     }
 
     private static void Warmup()
@@ -53,59 +71,5 @@ public class SerializationPerformanceTests
             QuickJson.SerializeObject(blog);
             JsonConvert.SerializeObject(blogWithoutAttributes);
         }
-    }
-
-    [Fact]
-    public void Serialize_WithCustomPaths_PerformsWell()
-    {
-        // Arrange
-        var blog = Helpers.CreateTestBlog();
-
-        // Act
-        var sw = Stopwatch.StartNew();
-        for (var i = 0; i < NumberOfTestingIterations; i++)
-        {
-            QuickJson.SerializeObject(blog);
-        }
-        sw.Stop();
-
-        // Assert
-        Assert.Fail($"Paths Results: {sw.ElapsedMilliseconds / NumberOfTestingIterations}ms, {sw.ElapsedTicks / NumberOfTestingIterations}ticks");
-    }
-
-    [Fact]
-    public void Serialize_WithoutCustomPaths_PerformsWell()
-    {
-        // Arrange
-        var blog = Helpers.CreateTestBlogWithoutAttributes();
-
-        // Act
-        var sw = Stopwatch.StartNew();
-        for (var i = 0; i < NumberOfTestingIterations; i++)
-        {
-            QuickJson.SerializeObject(blog);
-        }
-        sw.Stop();
-
-        // Assert
-        Assert.Fail($"NoPaths Results: {sw.ElapsedMilliseconds / NumberOfTestingIterations}ms, {sw.ElapsedTicks / NumberOfTestingIterations}ticks");
-    }
-
-    [Fact]
-    public void Serialize_WithNewtonsoft_Baseline()
-    {
-        // Arrange
-        var blog = Helpers.CreateTestBlog();
-
-        // Act
-        var sw = Stopwatch.StartNew();
-        for (var i = 0; i < NumberOfTestingIterations; i++)
-        {
-            JsonConvert.SerializeObject(blog);
-        }
-        sw.Stop();
-
-        // Assert
-        Assert.Fail($"Newtonsoft Results: {sw.ElapsedMilliseconds / NumberOfTestingIterations}ms, {sw.ElapsedTicks / NumberOfTestingIterations}ticks");
     }
 }
