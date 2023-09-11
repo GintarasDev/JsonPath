@@ -52,24 +52,17 @@ public static class QuickJson
         if (objectToSerialize is null)
             return JsonConvert.SerializeObject(objectToSerialize, settings);
 
-        if (settings is null)
-        {
-            if (_defaultSettings is null)
-                _defaultSettings = JsonConvert.DefaultSettings?.Invoke();
-            settings = _defaultSettings;
-        }
+        settings = GetSettingsToUse(settings);
 
-        var type = objectToSerialize?.GetType();
+        var type = objectToSerialize.GetType();
         var pathsToModify = type.GetAllPathsToModify(settings);
-        if (pathsToModify.Any())
-        {
-            var flattenedJson = GetFlattenedJsonDictionaryFromObject(objectToSerialize!);
-            UpdateJsonPaths(flattenedJson, pathsToModify);
-            var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
-            return JsonConvert.SerializeObject(deepStructure, settings);
-        }
+        if (!pathsToModify.Any())
+            return JsonConvert.SerializeObject(objectToSerialize, settings);
 
-        return JsonConvert.SerializeObject(objectToSerialize, settings);
+        var flattenedJson = GetFlattenedJsonDictionaryFromObject(objectToSerialize!);
+        UpdateJsonPaths(flattenedJson, pathsToModify);
+        var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
+        return JsonConvert.SerializeObject(deepStructure, settings);
     }
 
     public static T? DeserializeObject<T>(string json, JsonSerializerSettings? settings = null) where T : new()
@@ -96,6 +89,14 @@ public static class QuickJson
         }
 
         return JsonConvert.DeserializeObject<T>(json);
+    }
+
+    private static JsonSerializerSettings GetSettingsToUse(JsonSerializerSettings? settings)
+    {
+        if (settings is not null)
+            return settings;
+
+        return _defaultSettings ?? JsonConvert.DefaultSettings?.Invoke()!;
     }
 
     private static Dictionary<string, object?> GetFlattenedJsonDictionaryFromObject(object objectToSerialize) =>
