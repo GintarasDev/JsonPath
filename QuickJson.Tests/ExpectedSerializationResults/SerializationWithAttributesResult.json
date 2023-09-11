@@ -24,25 +24,29 @@
   "Articles": [
     {
       "Title": "Introduction to C#",
-      "Content": "C# is a modern, object-oriented programming language...",
-      "Metada": {
-        "PublishedOn": "2045-03-12T09:14:07"
-      },
       "Comments": [
         {
-          "Username": "JaneDoe",
+          "Author": {
+            "Name": "JaneDoe"
+          },
           "Content": "Great post!"
         },
         {
-          "Username": "BobSmith",
+          "Author": {
+            "Name": "BobSmith"
+          },
           "Content": "Very informative."
         }
-      ]
+      ],
+      "Content": "C# is a modern, object-oriented programming language...",
+      "Metadata": {
+        "PublishedOn": "2045-03-12T09:14:07"
+      }
     },
     {
       "Title": "Advanced C# Features",
       "Content": "C# has many advanced features such as LINQ, async/await...",
-      "Metada": {
+      "Metadata": {
         "PublishedOn": "2053-04-09T07:04:01"
       },
       "Comments": [

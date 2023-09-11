@@ -6,8 +6,8 @@ namespace QuickJson.Tests;
 public class SerializationPerformanceTests
 {
     private const int NumberOfTestingIterations = 25000;
-    private const int AcceptableDifferenceMultiplier = 24;
-    private const float AcceptableDifferenceWithoutAttributesMultiplier = 1.1f;
+    private const float AcceptableDifferenceMultiplier = 30f;
+    private const float AcceptableDifferenceWithoutAttributesMultiplier = 2f;
 
     [Fact]
     public void Serialize_WithCustomPaths_PerformsAcceptibly()

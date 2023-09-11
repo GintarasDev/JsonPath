@@ -11,6 +11,14 @@ public class PathToModify
     public required string OriginalPath;
     public required string NewPath;
     public bool IsEnumerable = false;
+
+    public (string originalPath, string newPath) GetPathsForSwapping(bool isInverted)
+    {
+        if (isInverted)
+            return (originalPath: NewPath, newPath: OriginalPath);
+
+        return (originalPath: OriginalPath, newPath: NewPath);
+    }
 }
 
 public static class QuickJson
@@ -178,20 +186,9 @@ public static class QuickJson
 
     private static void UpdateJsonPaths(Dictionary<string, object?> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
     {
-        var originalPath = "";
-        var newPath = "";
-        foreach (var pathModification in pathsToModify.Where(p => !p.IsEnumerable))
+        foreach (var pathModification in pathsToModify)
         {
-            if (isInverted)
-            {
-                originalPath = pathModification.NewPath;
-                newPath = pathModification.OriginalPath;
-            }
-            else
-            {
-                originalPath = pathModification.OriginalPath;
-                newPath = pathModification.NewPath;
-            }
+            var (originalPath, newPath) = pathModification.GetPathsForSwapping(isInverted);
 
             if (pathModification.IsEnumerable)
             {
