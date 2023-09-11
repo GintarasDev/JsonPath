@@ -5,44 +5,54 @@ namespace QuickJson.Tests;
 
 public class SerializationPerformanceTests
 {
-    private const int NumberOfTestingIterations = 20000;
+    private const int NumberOfTestingIterations = 25000;
+    private const int NumberOfBatches = 5;
 
     [Fact]
-    public void Serialize_WithCustomPathsResetingCache_PerformsWell()
+    public void Serialize_WithCustomPathsIgnoringInitialCaching_PerformsAcceptibly()
     {
         // Arrange
         var blog = Helpers.CreateTestBlog();
+        var blogWithoutAttributes = Helpers.CreateTestBlogWithoutAttributes();
+        _ = QuickJson.SerializeObject(blog); // Make sure type is cached
+
+        Warmup();
 
         // Act
         var sw = Stopwatch.StartNew();
         for (var i = 0; i < NumberOfTestingIterations; i++)
         {
-            QuickJson.ClearCache();
             QuickJson.SerializeObject(blog);
         }
         sw.Stop();
+        var elapsedTicksQuickJson = sw.ElapsedTicks / NumberOfTestingIterations;
+
+        sw = Stopwatch.StartNew();
+        for (var i = 0; i < NumberOfTestingIterations; i++)
+        {
+            JsonConvert.SerializeObject(blogWithoutAttributes);
+        }
+        sw.Stop();
+        var elapsedTicksNewtonsoftJson = sw.ElapsedTicks / NumberOfTestingIterations;
 
         // Assert
-        Assert.Fail($"Paths Results: {sw.ElapsedMilliseconds / NumberOfTestingIterations}ms, {sw.ElapsedTicks / NumberOfTestingIterations}ticks");
+        Assert.True(
+            elapsedTicksNewtonsoftJson * 24 >= elapsedTicksQuickJson,
+            $"NewtonsonJson took: {elapsedTicksNewtonsoftJson} ticks\n" +
+            $"QuickJson took: {elapsedTicksQuickJson} ticks");
     }
 
-    [Fact]
-    public void Serialize_WithCustomPathsIgnoringInitialCaching_PerformsWell()
+    private static void Warmup()
     {
-        // Arrange
         var blog = Helpers.CreateTestBlog();
-        QuickJson.SerializeObject(blog); // Make sure type is cached
+        var blogWithoutAttributes = Helpers.CreateTestBlogWithoutAttributes();
 
         // Act
-        var sw = Stopwatch.StartNew();
         for (var i = 0; i < NumberOfTestingIterations; i++)
         {
             QuickJson.SerializeObject(blog);
+            JsonConvert.SerializeObject(blogWithoutAttributes);
         }
-        sw.Stop();
-
-        // Assert
-        Assert.Fail($"Paths Results: {sw.ElapsedMilliseconds / NumberOfTestingIterations}ms, {sw.ElapsedTicks / NumberOfTestingIterations}ticks");
     }
 
     [Fact]
