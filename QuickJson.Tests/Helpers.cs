@@ -1,16 +1,18 @@
-﻿using QuickJson.Tests.TestingClasses.WithoutAttributes;
+﻿using Newtonsoft.Json.Linq;
 using QuickJson.Tests.TestingClasses;
-using Newtonsoft.Json.Linq;
+using QuickJson.Tests.TestingClasses.WithoutAttributes;
 
 namespace QuickJson.Tests;
 
 internal static class Helpers
 {
-    internal static readonly Guid BlogId = new Guid("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-    internal static readonly Guid AuthorId = new Guid("11111111-2222-3333-4444-555555555555");
+    internal static readonly Guid BlogId = new("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    internal static readonly Guid AuthorId = new("11111111-2222-3333-4444-555555555555");
 
     internal static readonly DateTime AuthorSponsorCreatedDate = new DateTime(2025, 4, 11, 7, 23, 31);
     internal static readonly DateTime OurSponsorCreatedDate = new DateTime(2031, 5, 17, 12, 15, 5);
+    internal static readonly DateTime PostCreatedDate0 = new DateTime(2045, 3, 12, 9, 14, 7);
+    internal static readonly DateTime PostCreatedDate1 = new DateTime(2053, 4, 9, 7, 4, 1);
 
     internal static string RemoveFormattingAndSpaces(string json) =>
         json.Replace(" ", "").Replace("\n", "").Replace("\r", "");
@@ -22,34 +24,34 @@ internal static class Helpers
     {
         Assert.Equal(expected.Title, actual.Title);
         Assert.Equal(expected.Content, actual.Content);
-        Assert.Equal(expected.Comments.Count, actual.Comments.Count);
-        for (var i = 0; i < expected.Comments.Count; i++)
-            AssertCommentEquals(expected.Comments[i], actual.Comments[i]);
+        Assert.Equal(expected.Comments?.Count, actual.Comments?.Count);
+        for (var i = 0; i < expected.Comments?.Count; i++)
+            AssertCommentEquals(expected.Comments[i], actual.Comments?[i]);
     }
 
     internal static void AssertPostSimpleEquals(PostSimple expected, PostSimple actual)
     {
         Assert.Equal(expected.Title, actual.Title);
         Assert.Equal(expected.Content, actual.Content);
-        Assert.Equal(expected.Comments.Count, actual.Comments.Count);
-        for (var i = 0; i < expected.Comments.Count; i++)
-            AssertCommentSimpleEquals(expected.Comments[i], actual.Comments[i]);
+        Assert.Equal(expected.Comments?.Count, actual.Comments?.Count);
+        for (var i = 0; i < expected.Comments?.Count; i++)
+            AssertCommentSimpleEquals(expected.Comments[i], actual.Comments?[i]);
     }
 
-    internal static void AssertSponsorEquals(Sponsor expected, Sponsor actual)
+    internal static void AssertSponsorEquals(Sponsor expected, Sponsor? actual)
     {
-        Assert.Equal(expected.Name, actual.Name);
-        Assert.Equal(expected.Description, actual.Description);
-        Assert.Equal(expected.CreatedDate, actual.CreatedDate);
-        Assert.Equal(expected.NumberOfAds, actual.NumberOfAds);
+        Assert.Equal(expected.Name, actual?.Name);
+        Assert.Equal(expected.Description, actual?.Description);
+        Assert.Equal(expected.CreatedDate, actual?.CreatedDate);
+        Assert.Equal(expected.NumberOfAds, actual?.NumberOfAds);
     }
 
-    internal static void AssertSponsorSimpleEquals(SponsorSimple expected, SponsorSimple actual)
+    internal static void AssertSponsorSimpleEquals(SponsorSimple expected, SponsorSimple? actual)
     {
-        Assert.Equal(expected.Name, actual.Name);
-        Assert.Equal(expected.Description, actual.Description);
-        Assert.Equal(expected.CreatedDate, actual.CreatedDate);
-        Assert.Equal(expected.NumberOfAds, actual.NumberOfAds);
+        Assert.Equal(expected.Name, actual?.Name);
+        Assert.Equal(expected.Description, actual?.Description);
+        Assert.Equal(expected.CreatedDate, actual?.CreatedDate);
+        Assert.Equal(expected.NumberOfAds, actual?.NumberOfAds);
     }
 
     internal static BlogSimple CreateTestBlogWithoutAttributes()
@@ -80,6 +82,7 @@ internal static class Helpers
                 {
                     Title = "Introduction to C#",
                     Content = "C# is a modern, object-oriented programming language...",
+                    CreatedDate = PostCreatedDate0,
                     Comments = new List<CommentSimple>
                     {
                         new CommentSimple {Username = "JaneDoe", Content = "Great post!"},
@@ -90,6 +93,7 @@ internal static class Helpers
                 {
                     Title = "Advanced C# Features",
                     Content = "C# has many advanced features such as LINQ, async/await...",
+                    CreatedDate = PostCreatedDate1,
                     Comments = new List<CommentSimple>
                     {
                         new CommentSimple {Username = "AliceJones", Content = "Thanks for sharing!"},
@@ -129,6 +133,7 @@ internal static class Helpers
                 {
                     Title = "Introduction to C#",
                     Content = "C# is a modern, object-oriented programming language...",
+                    CreatedDate = PostCreatedDate0,
                     Comments = new List<Comment>
                     {
                         new Comment {Username = "JaneDoe", Content = "Great post!"},
@@ -139,6 +144,7 @@ internal static class Helpers
                 {
                     Title = "Advanced C# Features",
                     Content = "C# has many advanced features such as LINQ, async/await...",
+                    CreatedDate = PostCreatedDate1,
                     Comments = new List<Comment>
                     {
                         new Comment {Username = "AliceJones", Content = "Thanks for sharing!"},
@@ -153,15 +159,15 @@ internal static class Helpers
     internal static async Task<string> GetJsonFromTestFile(string filename) =>
         await File.ReadAllTextAsync($"./ExpectedSerializationResults/{filename}.json");
 
-    private static void AssertCommentEquals(Comment expected, Comment actual)
+    private static void AssertCommentEquals(Comment expected, Comment? actual)
     {
-        Assert.Equal(expected.Username, actual.Username);
-        Assert.Equal(expected.Content, actual.Content);
+        Assert.Equal(expected.Username, actual?.Username);
+        Assert.Equal(expected.Content, actual?.Content);
     }
 
-    private static void AssertCommentSimpleEquals(CommentSimple expected, CommentSimple actual)
+    private static void AssertCommentSimpleEquals(CommentSimple expected, CommentSimple? actual)
     {
-        Assert.Equal(expected.Username, actual.Username);
-        Assert.Equal(expected.Content, actual.Content);
+        Assert.Equal(expected.Username, actual?.Username);
+        Assert.Equal(expected.Content, actual?.Content);
     }
 }

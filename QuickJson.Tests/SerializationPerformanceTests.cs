@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using QuickJson.Tests.TestingClasses;
 using System.Diagnostics;
 
 namespace QuickJson.Tests;
