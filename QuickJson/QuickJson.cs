@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -11,6 +12,7 @@ public class PathToModify
     public required string OriginalPath;
     public required string NewPath;
     public bool IsEnumerable = false;
+    public bool IsDictionary = false;
 
     public (string originalPath, string newPath) GetPathsForSwapping(bool isInverted)
     {
@@ -200,6 +202,18 @@ public static class QuickJson
                     jsonDictionary.Remove(matchingPath);
                 }
             }
+            else if (pathModification.IsDictionary)
+            {
+                var pathsToUpdate = jsonDictionary
+                    .Where(d => d.Key.StartsWith(originalPath))
+                    .ToList();
+                foreach (var path in pathsToUpdate)
+                {
+                    var updatedPath = newPath + path.Key[originalPath.Length..];
+                    jsonDictionary[updatedPath] = jsonDictionary[path.Key];
+                    jsonDictionary.Remove(path.Key);
+                }
+            }
             else
             {
                 if (jsonDictionary.ContainsKey(originalPath))
@@ -252,7 +266,8 @@ public static class QuickJson
             {
                 OriginalPath = path.path[1..],
                 NewPath = path.newPath[1..],
-                IsEnumerable = path.isEnumerable
+                IsEnumerable = path.isEnumerable,
+                IsDictionary = path.isDictionary
             });
         }
 
@@ -262,9 +277,10 @@ public static class QuickJson
 
     // No proper support for dictionaries yet
     // No proper support for non generic enumerables
-    private static IEnumerable<(string path, string newPath, bool isEnumerable)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
+    private static IEnumerable<(string path, string newPath, bool isEnumerable, bool isDictionary)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
     {
         var isEnumerable = false;
+        var isDictionary = false;
         var myName = propertyInfo is null ? "" : propertyInfo.Name;
 
         var jsonPathAttribute = propertyInfo?.GetCustomAttribute<JsonPathAttribute>();
@@ -273,7 +289,9 @@ public static class QuickJson
         if (myNewName.EndsWith("."))
             myNewName += propertyInfo is null ? "WTF_JUST_HAPPENED" : propertyInfo.Name; // TODO: Update
 
-        if (type.IsAssignableTo(typeof(IEnumerable)) && type.IsGenericType)
+        if (type.IsAssignableTo(typeof(IDictionary)))
+            isDictionary = true;
+        else if (type.IsAssignableTo(typeof(IEnumerable)) && type.IsGenericType)
         {
             type = type.GetGenericArguments()[0];
             myName += "[*]";
@@ -290,15 +308,15 @@ public static class QuickJson
             foreach (var property in propertiesToCheck)
             {
                 foreach (var path in property.PropertyType.GetPathsToModify(settings, property))
-                    yield return ($"{myName}{path.path}", $"{myNewName}{path.newPath}", isEnumerable || path.isEnumerable);
+                    yield return ($"{myName}{path.path}", $"{myNewName}{path.newPath}", isEnumerable || path.isEnumerable, isDictionary || path.isDictionary);
             }
         }
         else
-            yield return (myName, myNewName, isEnumerable);
+            yield return (myName, myNewName, isEnumerable, isDictionary);
     }
 
     private static bool CanHaveSubPaths(this Type type, JsonSerializerSettings? settings) =>
-        !type.IsPrimitive && !TypesToIgnore.Contains(type) && !type.HasCustomConverter(settings);
+        !type.IsPrimitive && !TypesToIgnore.Contains(type) && !type.HasCustomConverter(settings) && !type.IsAssignableTo(typeof(IDictionary));
 
     private static bool HasCustomConverter(this Type type, JsonSerializerSettings? settings)
     {
