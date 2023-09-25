@@ -38,13 +38,13 @@ public class EnumerablesTest
         ["Key2"] = new TestValue { Greeting = "Sup", Number = 85146 }
     };
 
-    //[JsonPath("Superb.")]
-    //public Dictionary<TestKey, TestValue> DictionaryWithObjectsAsKeys { get; set; } = new()
-    //{
-    //    [new TestKey { SomeOtherId = "0 Super Key 0" }] = new TestValue { Greeting = "Good evening sir", Number = 75 },
-    //    [new TestKey { SomeOtherId = "1 Super Key 1" }] = new TestValue { Greeting = "Oh hi", Number = 4582 },
-    //    [new TestKey { SomeOtherId = "2 Super Key 2" }] = new TestValue { Greeting = "Long time no see!", Number = -175 }
-    //};
+    [JsonPath("Integers.Keys")]
+    public Dictionary<int, AnotherTestValue> IntValuesDictionary { get; set; } = new()
+    {
+        [541] = new AnotherTestValue(),
+        [5] = new AnotherTestValue(),
+        [81] = new AnotherTestValue()
+    };
 }
 
 public class TestValue
@@ -62,8 +62,32 @@ public class TestValue
     };
 }
 
-public class TestKey
+public class AnotherTestValue
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string SomeOtherId { get; set; } = "How are you?";
+    public Guid Id { get; set; } = new Guid("aaaaaaaa-bbbb-cccc-dddd-ffffffffffff");
+    public List<TestValue> TestValues { get; set; } = new List<TestValue>
+    {
+        new()
+        {
+            Greeting = "Lama",
+            Number = 781,
+            NestedDictionary = new()
+            {
+                ["Test"] = "Shark",
+                ["What"] = "Horse",
+                ["Morning"] = "Hippo"
+            }
+        },
+        new()
+        {
+            Greeting = "Zebra",
+            Number = 9951,
+            NestedDictionary = new()
+            {
+                ["Almond"] = "Rhino",
+                ["Tromb"] = "Girafe",
+                ["Morning"] = "Dolphin"
+            }
+        },
+    };
 }

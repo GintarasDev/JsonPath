@@ -54,5 +54,54 @@
         }
       }
     }
+  },
+  "Integers": {
+    "Keys": {
+      "541": {
+        "Number": 68,
+        "Nested": {
+          "Values": {
+            "Hi1": "Crocodile",
+            "Hi2": "Aligator",
+            "Hi0": "Armadilo"
+          }
+        },
+        "Personalization": {
+          "Localization": {
+            "Greeting": "Hello"
+          }
+        }
+      },
+      "5": {
+        "Number": 1,
+        "Personalization": {
+          "Localization": {
+            "Greeting": "Oh hi..."
+          }
+        },
+        "Nested": {
+          "Values": {
+            "Hi0": "Armadilo",
+            "Hi1": "Crocodile",
+            "Hi2": "Aligator"
+          }
+        }
+      },
+      "81": {
+        "Number": 85146,
+        "Personalization": {
+          "Localization": {
+            "Greeting": "Good evening sir"
+          }
+        },
+        "Nested": {
+          "Values": {
+            "Hi0": "Armadilo",
+            "Hi1": "Crocodile",
+            "Hi2": "Aligator"
+          }
+        }
+      }
+    }
   }
 }

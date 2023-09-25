@@ -189,9 +189,6 @@ public static class QuickJson
 
     private static void UpdateJsonPaths(Dictionary<string, object?> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
     {
-        //var pathsToModifySorted = pathsToModify
-        //    .OrderBy(p => p.OriginalPath.Split(".").Length)
-        //    .ThenBy(p => p.OriginalPath.Length);
         foreach (var pathModification in pathsToModify)
         {
             var (originalPath, newPath) = pathModification.GetPathsForSwapping(isInverted);
@@ -207,23 +204,10 @@ public static class QuickJson
             }
             else if (pathModification.IsDictionary)
             {
-                //var orgPathParts = pathModification.OriginalPath.Split(".*.");
-                //foreach (var keyValuePair in jsonDictionary)
-                //{
-                //    if (keyValuePair.Key.StartsWith(orgPathParts[])
-                //    {
-
-                //    }
-                //    var updatedPath = newPath + path.Key[originalPath.Length..];
-                //    jsonDictionary[updatedPath] = jsonDictionary[path.Key];
-                //    jsonDictionary.Remove(path.Key);
-                //}
                 var pattern = Regex.Escape(pathModification.OriginalPath).Replace("\\.\\*", "\\..*"); //pathModification.OriginalPath.Replace(".", "\\.").Replace("*", ".*");
                 var pathsToUpdate = jsonDictionary
                     .Where(d => Regex.IsMatch(d.Key, pattern))
                     .ToList();
-
-                //var newPathParts = pathModification.NewPath.Split(".*");
 
                 var orgPathParts = pathModification.OriginalPath.Split(".");
                 var keysIds = new List<int>();
@@ -239,16 +223,12 @@ public static class QuickJson
                     var newKey = pathModification.NewPath;
                     foreach (var keyId in keysIds)
                     {
-                        newKey = newKey.ReplaceFirst("*", pathParts[keyId]); // will this work with array nested in a dictionary?
+                        newKey = newKey.ReplaceFirstKeyPlaceholder(pathParts[keyId]); // will this work with array nested in a dictionary?
                         // TODO: fix reg above comment
                     }
 
                     jsonDictionary[newKey] = jsonDictionary[path.Key];
                     jsonDictionary.Remove(path.Key);
-
-                    //var updatedPath = newPath + path.Key[originalPath.Length..];
-                    //jsonDictionary[updatedPath] = jsonDictionary[path.Key];
-                    //jsonDictionary.Remove(path.Key);
                 }
             }
             else
@@ -262,14 +242,30 @@ public static class QuickJson
         }
     }
 
-    private static string ReplaceFirst(this string text, string search, string replace)
+    private static string ReplaceFirstKeyPlaceholder(this string text, string key)
     {
-        int pos = text.IndexOf(search);
-        if (pos < 0)
+        const string KeyPattern = "*";
+        const int KeyPatternLength = 1;
+        const string ArrPattern = "[*]";
+        const int ArrPatternLength = 3;
+
+        int pos = text.IndexOf(KeyPattern);
+        while (pos >= 0)
         {
-            return text;
+            // Check if the found position is part of the skip pattern
+            int skipPos = text.IndexOf(ArrPattern);
+            if (skipPos >= 0 && pos > skipPos && pos < skipPos + ArrPatternLength)
+            {
+                // If it is, find the next occurrence of the search string
+                pos = text.IndexOf(KeyPattern, pos + KeyPatternLength);
+            }
+            else
+            {
+                // If it's not part of the skip pattern, do the replacement
+                return text.Substring(0, pos) + key + text.Substring(pos + KeyPatternLength);
+            }
         }
-        return text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
+        return text;
     }
 
     private static string PrepareNewIEnumerablePath(string matchingPath, string newPath)
