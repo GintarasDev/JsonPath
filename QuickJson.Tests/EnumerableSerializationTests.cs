@@ -5,17 +5,18 @@ namespace QuickJson.Tests;
 public class EnumerableSerializationTests
 {
     [Fact]
-    public void Serialize_WithDictionariesUsingAttributes_SerializesAsExpected()
+    public async Task Serialize_WithDictionariesUsingAttributes_SerializesAsExpected()
     {
         // Arrange
         var enumerablesTest = new EnumerablesTest();
-        var newtonsoftResult = JsonConvert.SerializeObject(enumerablesTest);
+        var expectedJson = await Helpers.GetJsonFromTestFile("EnumerablesWithAttributesResult");
 
         // Act
-        var result = QuickJson.SerializeObject(enumerablesTest);
+        var serializationResult = QuickJson.SerializeObject(enumerablesTest);
 
         // Assert
-        Assert.Equal(newtonsoftResult, result);
+        Assert.Equal(Helpers.RemoveFormattingAndSpaces(expectedJson), Helpers.RemoveFormattingAndSpaces(serializationResult));
+        Assert.True(Helpers.IsJsonEqual(expectedJson, serializationResult));
     }
 }
 

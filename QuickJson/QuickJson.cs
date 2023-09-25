@@ -189,6 +189,9 @@ public static class QuickJson
 
     private static void UpdateJsonPaths(Dictionary<string, object?> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
     {
+        //var pathsToModifySorted = pathsToModify
+        //    .OrderBy(p => p.OriginalPath.Split(".").Length)
+        //    .ThenBy(p => p.OriginalPath.Length);
         foreach (var pathModification in pathsToModify)
         {
             var (originalPath, newPath) = pathModification.GetPathsForSwapping(isInverted);
@@ -204,14 +207,48 @@ public static class QuickJson
             }
             else if (pathModification.IsDictionary)
             {
+                //var orgPathParts = pathModification.OriginalPath.Split(".*.");
+                //foreach (var keyValuePair in jsonDictionary)
+                //{
+                //    if (keyValuePair.Key.StartsWith(orgPathParts[])
+                //    {
+
+                //    }
+                //    var updatedPath = newPath + path.Key[originalPath.Length..];
+                //    jsonDictionary[updatedPath] = jsonDictionary[path.Key];
+                //    jsonDictionary.Remove(path.Key);
+                //}
+                var pattern = Regex.Escape(pathModification.OriginalPath).Replace("\\.\\*", "\\..*"); //pathModification.OriginalPath.Replace(".", "\\.").Replace("*", ".*");
                 var pathsToUpdate = jsonDictionary
-                    .Where(d => d.Key.StartsWith(originalPath))
+                    .Where(d => Regex.IsMatch(d.Key, pattern))
                     .ToList();
+
+                //var newPathParts = pathModification.NewPath.Split(".*");
+
+                var orgPathParts = pathModification.OriginalPath.Split(".");
+                var keysIds = new List<int>();
+                for (var i = 0; i < orgPathParts.Length; i++)
+                {
+                    if (orgPathParts[i] == "*")
+                        keysIds.Add(i);
+                }
                 foreach (var path in pathsToUpdate)
                 {
-                    var updatedPath = newPath + path.Key[originalPath.Length..];
-                    jsonDictionary[updatedPath] = jsonDictionary[path.Key];
+                    var pathParts = path.Key.Split(".");
+
+                    var newKey = pathModification.NewPath;
+                    foreach (var keyId in keysIds)
+                    {
+                        newKey = newKey.ReplaceFirst("*", pathParts[keyId]); // will this work with array nested in a dictionary?
+                        // TODO: fix reg above comment
+                    }
+
+                    jsonDictionary[newKey] = jsonDictionary[path.Key];
                     jsonDictionary.Remove(path.Key);
+
+                    //var updatedPath = newPath + path.Key[originalPath.Length..];
+                    //jsonDictionary[updatedPath] = jsonDictionary[path.Key];
+                    //jsonDictionary.Remove(path.Key);
                 }
             }
             else
@@ -223,6 +260,16 @@ public static class QuickJson
                 }
             }
         }
+    }
+
+    private static string ReplaceFirst(this string text, string search, string replace)
+    {
+        int pos = text.IndexOf(search);
+        if (pos < 0)
+        {
+            return text;
+        }
+        return text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
     }
 
     private static string PrepareNewIEnumerablePath(string matchingPath, string newPath)
@@ -290,7 +337,12 @@ public static class QuickJson
             myNewName += propertyInfo is null ? "WTF_JUST_HAPPENED" : propertyInfo.Name; // TODO: Update
 
         if (type.IsAssignableTo(typeof(IDictionary)))
+        {
+            type = type.GetGenericArguments()[1];
+            myName += ".*";
+            myNewName += ".*";
             isDictionary = true;
+        }
         else if (type.IsAssignableTo(typeof(IEnumerable)) && type.IsGenericType)
         {
             type = type.GetGenericArguments()[0];
@@ -316,7 +368,7 @@ public static class QuickJson
     }
 
     private static bool CanHaveSubPaths(this Type type, JsonSerializerSettings? settings) =>
-        !type.IsPrimitive && !TypesToIgnore.Contains(type) && !type.HasCustomConverter(settings) && !type.IsAssignableTo(typeof(IDictionary));
+        !type.IsPrimitive && !TypesToIgnore.Contains(type) && !type.HasCustomConverter(settings);
 
     private static bool HasCustomConverter(this Type type, JsonSerializerSettings? settings)
     {

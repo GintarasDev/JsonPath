@@ -32,6 +32,9 @@
     <None Update="ExpectedSerializationResults\BlockSimpleSerialized.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="ExpectedSerializationResults\EnumerablesWithAttributesResult.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="ExpectedSerializationResults\NumericsWithAttributesResult.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

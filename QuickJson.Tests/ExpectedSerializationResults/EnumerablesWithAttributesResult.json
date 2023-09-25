@@ -1,0 +1,58 @@
+{
+  "Amazingness": {
+    "Key1": "Super",
+    "Key2": "Great",
+    "Key0": "Hello"
+  },
+  "Superb": {
+    "Performance": {
+      "Values": {
+        "Key0": {
+          "Number": 68,
+          "Nested": {
+            "Values": {
+              "Hi1": "Crocodile",
+              "Hi2": "Aligator",
+              "Hi0": "Armadilo"
+            }
+          },
+          "Personalization": {
+            "Localization": {
+              "Greeting": "Morning!"
+            }
+          }
+        },
+        "Key1": {
+          "Number": 1,
+          "Personalization": {
+            "Localization": {
+              "Greeting": "Hi"
+            }
+          },
+          "Nested": {
+            "Values": {
+              "Hi0": "Armadilo",
+              "Hi1": "Crocodile",
+              "Hi2": "Aligator"
+            }
+          }
+        },
+        "Key2": {
+          "Number": 85146,
+          "Personalization": {
+            "Localization": {
+              "Greeting": "Sup"
+            }
+          },
+          "Nested": {
+            "Values": {
+              "Hi0": "Armadilo",
+              "Hi1": "Crocodile",
+              "Hi2": "Aligator"
+            }
+          }
+        }
+      }
+    }
+  }
+}
