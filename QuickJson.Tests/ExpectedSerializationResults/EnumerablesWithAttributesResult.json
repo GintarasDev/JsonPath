@@ -58,49 +58,73 @@
   "Integers": {
     "Keys": {
       "541": {
-        "Number": 68,
-        "Nested": {
-          "Values": {
-            "Hi1": "Crocodile",
-            "Hi2": "Aligator",
-            "Hi0": "Armadilo"
+        "Id": "aaaaaaaa-bbbb-cccc-dddd-ffffffffffff",
+        "TestValues": [
+          {
+            "NestedDictionary": {
+              "What": "Horse",
+              "Morning": "Hippo",
+              "Test": "Shark"
+            },
+            "Number": 781,
+            "Greeting": "Lama"
+          },
+          {
+            "Number": 9951,
+            "Greeting": "Zebra",
+            "NestedDictionary": {
+              "Almond": "Rhino",
+              "Tromb": "Girafe",
+              "Morning": "Dolphin"
+            }
           }
-        },
-        "Personalization": {
-          "Localization": {
-            "Greeting": "Hello"
-          }
-        }
+        ]
       },
       "5": {
-        "Number": 1,
-        "Personalization": {
-          "Localization": {
-            "Greeting": "Oh hi..."
+        "Id": "aaaaaaaa-bbbb-cccc-dddd-ffffffffffff",
+        "TestValues": [
+          {
+            "Number": 781,
+            "Greeting": "Lama",
+            "NestedDictionary": {
+              "Test": "Shark",
+              "What": "Horse",
+              "Morning": "Hippo"
+            }
+          },
+          {
+            "Number": 9951,
+            "Greeting": "Zebra",
+            "NestedDictionary": {
+              "Almond": "Rhino",
+              "Tromb": "Girafe",
+              "Morning": "Dolphin"
+            }
           }
-        },
-        "Nested": {
-          "Values": {
-            "Hi0": "Armadilo",
-            "Hi1": "Crocodile",
-            "Hi2": "Aligator"
-          }
-        }
+        ]
       },
       "81": {
-        "Number": 85146,
-        "Personalization": {
-          "Localization": {
-            "Greeting": "Good evening sir"
+        "Id": "aaaaaaaa-bbbb-cccc-dddd-ffffffffffff",
+        "TestValues": [
+          {
+            "Number": 781,
+            "Greeting": "Lama",
+            "NestedDictionary": {
+              "Test": "Shark",
+              "What": "Horse",
+              "Morning": "Hippo"
+            }
+          },
+          {
+            "Number": 9951,
+            "Greeting": "Zebra",
+            "NestedDictionary": {
+              "Almond": "Rhino",
+              "Tromb": "Girafe",
+              "Morning": "Dolphin"
+            }
           }
-        },
-        "Nested": {
-          "Values": {
-            "Hi0": "Armadilo",
-            "Hi1": "Crocodile",
-            "Hi2": "Aligator"
-          }
-        }
+        ]
       }
     }
   }
