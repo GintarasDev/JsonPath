@@ -24,6 +24,8 @@ public class PathToModify
 
 public static class QuickJson
 {
+    // TODO: No non-generic enumerables support yet
+    // TODO: Only supports serealizing Properties ATM?
     // TODO: we currently rely on '.' as path separator
     // TODO: check if its safe to remove Regex.Escape here as we are escaping in other places and if this would actually have
     // something we would need to escape - we would end up with double escapes like '\\'
@@ -128,13 +130,11 @@ public static class QuickJson
 
     private static void ConvertKeyValuePairIntoDeepObjectStructure(KeyValuePair<string, object?> keyValuePair, Dictionary<string, object> root)
     {
-        // Split the key into its parts
         var pathParts = keyValuePair.Key.Split('.');
         var current = root;
         for (int i = 0; i < pathParts.Length; i++)
         {
             var part = pathParts[i];
-            // Check if the part represents an indexed element in a list
             if (TryGetListIndex(part, out string listName, out int index))
                 current = AddIndexedElement(current, listName, index);
             else
@@ -149,12 +149,10 @@ public static class QuickJson
         int currentPathPartIndex,
         KeyValuePair<string, object?> keyValuePair)
     {
-        // Check if this is the last part of the key
         if (currentPathPartIndex == pathParts.Length - 1)
             current.Add(part, keyValuePair.Value);
         else
         {
-            // Ensure that the current dictionary contains a dictionary with this name
             if (!current.ContainsKey(part))
                 current.Add(part, new Dictionary<string, object?>());
             current = (Dictionary<string, object?>)current[part];
@@ -165,11 +163,10 @@ public static class QuickJson
 
     private static Dictionary<string, object> AddIndexedElement(Dictionary<string, object> current, string listName, int index)
     {
-        // Ensure that the current dictionary contains a list with this name
         if (!current.ContainsKey(listName))
             current.Add(listName, new List<Dictionary<string, object>>());
         var list = (List<Dictionary<string, object>>)current[listName];
-        // Ensure that the list has enough elements to include the specified index
+
         while (list.Count <= index)
             list.Add(new Dictionary<string, object>());
         return list[index];
@@ -312,8 +309,6 @@ public static class QuickJson
         return pathsToModify;
     }
 
-    // No proper support for dictionaries yet
-    // No proper support for non generic enumerables
     private static IEnumerable<(string path, string newPath, bool isEnumerable, bool isDictionary)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
     {
         var isEnumerable = false;
