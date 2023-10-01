@@ -197,57 +197,55 @@ public static class QuickJson
         foreach (var pathModification in pathsToModify)
         {
             var (originalPath, newPath) = pathModification.GetPathsForSwapping(isInverted);
-            if (!pathModification.IsEnumerable && !pathModification.IsDictionary && jsonDictionary.ContainsKey(originalPath))
+            if (pathModification.IsDictionary)
+                UpdateDictionaryPaths(jsonDictionary, originalPath, newPath);
+            else if (pathModification.IsEnumerable)
+                UpdateEnumerablePaths(jsonDictionary, originalPath, newPath);
+            else if (jsonDictionary.ContainsKey(originalPath))
             {
                 jsonDictionary[newPath] = jsonDictionary[originalPath];
                 jsonDictionary.Remove(originalPath);
             }
-            else
-            {
-                UpdateNestedPaths(jsonDictionary, pathModification, originalPath, newPath);
-            }
         }
     }
 
-    private static void UpdateNestedPaths(Dictionary<string, object?> jsonDictionary, PathToModify pathModification, string originalPath, string newPath)
+    private static void UpdateDictionaryPaths(Dictionary<string, object?> jsonDictionary, string originalPath, string newPath)
     {
-        if (pathModification.IsEnumerable && !pathModification.IsDictionary)
+        var matchingPaths = GetMatchingDictionaryPaths(jsonDictionary, originalPath);
+        var orgPathParts = originalPath.Split(DictionaryKeyPlaceholder);
+        var newPathParts = newPath.Split(DictionaryKeyPlaceholder);
+        foreach (var matchingPath in matchingPaths)
         {
-            foreach (var matchingPath in GetMatchingEnumerablePaths(jsonDictionary, originalPath))
-            {
-                var newIEnumerablePath = PrepareNewIEnumerablePath(matchingPath, newPath);
-                jsonDictionary[newIEnumerablePath] = jsonDictionary[matchingPath];
-                jsonDictionary.Remove(matchingPath);
-            }
-            return;
-        }
-
-        var pattern = Regex.Escape(pathModification.OriginalPath).Replace(DictionaryKeyPlaceholder, "\\..*").Replace(IteratorPlaceholder, @"\[\d+\]");
-        var pathsToUpdate = jsonDictionary
-            .Where(d => Regex.IsMatch(d.Key, pattern))
-            .ToList();
-        var orgPathParts = pathModification.OriginalPath.Split(DictionaryKeyPlaceholder);
-        var newPathParts = pathModification.NewPath.Split(DictionaryKeyPlaceholder);
-        foreach (var path in pathsToUpdate)
-        {
-            var pathParts = path.Key.Split(".");
-            var newKey = path.Key;
+            var pathParts = matchingPath.Split(".");
+            var updatedPath = matchingPath;
             var currentSkipCount = 0;
+
             for (var i = 0; i < orgPathParts.Length; i++)
             {
-                // Replace DictionaryKeyPlaceholder and IteratorPlaceholder in newPathParts[i] with the actual key/index from the original path
-                var replacement = newPathParts[i].Replace(DictionaryKeyPlaceholder, pathParts[i]).Replace(IteratorPlaceholder, GetEnumerableIndexV2(pathParts[i]));
-                newKey = newKey.ReplaceFirst(orgPathParts[i], replacement, out var indexToContinueFrom, currentSkipCount);
+                var replacement = newPathParts[i]
+                    .Replace(DictionaryKeyPlaceholder, pathParts[i])
+                    .Replace(IteratorPlaceholder, GetEnumerableIndex(pathParts[i]));
+                updatedPath = updatedPath.ReplaceFirst(orgPathParts[i], replacement, out var indexToContinueFrom, currentSkipCount);
                 currentSkipCount = indexToContinueFrom;
             }
-            jsonDictionary[newKey] = jsonDictionary[path.Key];
-            jsonDictionary.Remove(path.Key);
+
+            jsonDictionary[updatedPath] = jsonDictionary[matchingPath];
+            jsonDictionary.Remove(matchingPath);
         }
     }
 
-    private static string GetEnumerableIndexV2(string pathPart)
+    private static void UpdateEnumerablePaths(Dictionary<string, object?> jsonDictionary, string originalPath, string newPath)
     {
-        // Extract the index from the path part
+        foreach (var matchingPath in GetMatchingEnumerablePaths(jsonDictionary, originalPath))
+        {
+            var updatedPath = PrepareNewIEnumerablePath(matchingPath, newPath);
+            jsonDictionary[updatedPath] = jsonDictionary[matchingPath];
+            jsonDictionary.Remove(matchingPath);
+        }
+    }
+
+    private static string GetEnumerableIndex(string pathPart)
+    {
         var match = Regex.Match(pathPart, @"\[(\d+)\]");
         return match.Success ? match.Groups[1].Value : "";
     }
@@ -259,9 +257,7 @@ public static class QuickJson
 
         var regex = new Regex(IteratorPlaceholder);
         foreach (var i in indices)
-        {
             result = regex.Replace(result, $"[{i}]", 1);
-        }
 
         return result;
     }
@@ -274,10 +270,22 @@ public static class QuickJson
 
     private static string[] GetMatchingEnumerablePaths(Dictionary<string, object> jsonDictionary, string path)
     {
-        var template = "^" + Regex.Escape(path)
+        var pattern = "^" + Regex.Escape(path)
             .Replace(IteratorPlaceholder, @"\[\d+\]")
             .Replace(DictionaryKeyPlaceholder, @".+?");
-        return jsonDictionary.Keys.Where(key => Regex.IsMatch(key, template)).ToArray();
+        return jsonDictionary.Keys
+            .Where(key => Regex.IsMatch(key, pattern))
+            .ToArray();
+    }
+
+    private static string[] GetMatchingDictionaryPaths(Dictionary<string, object> jsonDictionary, string path)
+    {
+        var pattern = Regex.Escape(path)
+            .Replace(DictionaryKeyPlaceholder, "\\..*")
+            .Replace(IteratorPlaceholder, @"\[\d+\]");
+        return jsonDictionary.Keys
+            .Where(key => Regex.IsMatch(key, pattern))
+            .ToArray();
     }
 
     private static List<PathToModify> GetAllPathsToModify(this Type type, JsonSerializerSettings? settings)
