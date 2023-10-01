@@ -321,19 +321,23 @@ public static class QuickJson
         if (myNewName.EndsWith("."))
             myNewName += propertyInfo is null ? "WTF_JUST_HAPPENED" : propertyInfo.Name; // TODO: Update
 
+        if (type.IsAssignableTo(typeof(IEnumerable)) && !type.IsAssignableTo(typeof(IDictionary)))
+        {
+            if (type.IsGenericType)
+                type = type.GetGenericArguments()[0];
+            else if (type.IsArray)
+                type = type.GetElementType()!;
+            myName += IteratorPlaceholder;
+            myNewName += IteratorPlaceholder;
+            isEnumerable = true;
+        }
+
         if (type.IsAssignableTo(typeof(IDictionary)))
         {
             type = type.GetGenericArguments()[1];
             myName += DictionaryKeyPlaceholder;
             myNewName += DictionaryKeyPlaceholder;
             isDictionary = true;
-        }
-        else if (type.IsAssignableTo(typeof(IEnumerable)) && type.IsGenericType)
-        {
-            type = type.GetGenericArguments()[0];
-            myName += IteratorPlaceholder;
-            myNewName += IteratorPlaceholder;
-            isEnumerable = true;
         }
 
         if (type.CanHaveSubPaths(settings))
