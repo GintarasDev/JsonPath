@@ -11,9 +11,7 @@ public class EnumerableSerializationTests
 
         // Act
         var serializationResult = QuickJson.SerializeObject(enumerablesTest);
-
-        // TODO: fix nesting combinations of dictionaries and arrays
-        // Maybe just use different separators for arrays and dictionaries (eg. arrays would use [#] instead of [*]
+        
         // Assert
         Assert.Equal(Helpers.RemoveFormattingAndSpaces(expectedJson), Helpers.RemoveFormattingAndSpaces(serializationResult));
         Assert.True(Helpers.IsJsonEqual(expectedJson, serializationResult));
