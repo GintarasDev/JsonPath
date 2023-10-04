@@ -219,10 +219,19 @@ public static class QuickJson
 
             for (var i = 0; i < orgPathParts.Length; i++)
             {
-                var replacement = newPathParts[i]
-                    .Replace(DictionaryKeyPlaceholder, pathParts[i])
-                    .Replace(IteratorPlaceholder, GetEnumerableIndex(pathParts[i]));
-                updatedPath = updatedPath.ReplaceFirst(orgPathParts[i], replacement, out var indexToContinueFrom, currentSkipCount);
+                if (string.IsNullOrEmpty(orgPathParts[i]))
+                    continue;
+
+                var enumerableIndices = GetEnumerableIndex(pathParts.Length > i * 2 ? pathParts[i * 2] : pathParts[i]);
+                var replacement = newPathParts[i];
+                var valueToReplace = orgPathParts[i];
+                foreach (var index in enumerableIndices)
+                {
+                    replacement = replacement.Replace(IteratorPlaceholder, index);
+                    valueToReplace = valueToReplace.Replace(IteratorPlaceholder, index);
+                }
+
+                updatedPath = updatedPath.ReplaceFirst(valueToReplace, replacement, out var indexToContinueFrom, currentSkipCount);
                 currentSkipCount = indexToContinueFrom;
             }
 
@@ -241,10 +250,10 @@ public static class QuickJson
         }
     }
 
-    private static string GetEnumerableIndex(string pathPart)
+    private static string[] GetEnumerableIndex(string pathPart)
     {
-        var match = Regex.Match(pathPart, @"\[(\d+)\]");
-        return match.Success ? match.Groups[1].Value : "";
+        var matches = Regex.Matches(pathPart, @"\[(\d+)\]");
+        return matches.Cast<Match>().Select(m => m.Value).ToArray();
     }
 
     private static string PrepareNewIEnumerablePath(string matchingPath, string newPath)
@@ -321,7 +330,9 @@ public static class QuickJson
         if (myNewName.EndsWith("."))
             myNewName += propertyInfo is null ? "WTF_JUST_HAPPENED" : propertyInfo.Name; // TODO: Update
 
-        if (type.IsAssignableTo(typeof(IEnumerable)) && !type.IsAssignableTo(typeof(IDictionary)))
+        if (type.IsAssignableTo(typeof(IEnumerable))
+            && !type.IsAssignableTo(typeof(IDictionary))
+            && type != typeof(string))
         {
             if (type.IsGenericType)
                 type = type.GetGenericArguments()[0];

@@ -61,70 +61,169 @@
         "Id": "00000000-1111-1111-1111-222222222222",
         "TestValues": [
           {
-            "NestedDictionary": {
-              "Fruit": "apple",
-              "Morning": "Hippo",
-              "Test": "Shark"
+            "Nested": {
+              "Values": {
+                "Fruit": "apple",
+                "Morning": "Hippo",
+                "Test": "Shark"
+              }
             },
             "Number": 15,
-            "Greeting": "Lama"
+            "Personalization": {
+              "Localization": {
+                "Greeting": "Lama"
+              }
+            }
           },
           {
             "Number": 54,
-            "Greeting": "Zebra",
-            "NestedDictionary": {
-              "milkType": "Almond",
-              "Tromb": "Girafe",
-              "Morning": "Dolphin"
+            "Personalization": {
+              "Localization": {
+                "Greeting": "Zebra"
+              }
+            },
+            "Nested": {
+              "Values": {
+                "milkType": "Almond",
+                "Tromb": "Girafe",
+                "Morning": "Dolphin"
+              }
             }
           }
-        ]
+        ],
+        "Multiple": {
+          "Nests": {
+            "ArrayOfStringsDictionaries": [
+              {
+                "Nest0": "Am",
+                "Fest0": "Groot",
+                "Test0": "I"
+              },
+              {
+                "Kilo": "620",
+                "Mega": "571",
+                "Giga": "951"
+              },
+              {
+                "Phone": "Xiaomi Mi",
+                "OtherPhone": "Samsung Galaxy",
+                "ThirdPhone": "Apple iPhone"
+              }
+            ]
+          }
+        }
       },
       "125": {
         "Id": "aaaaaaaa-8888-9999-9999-eeeeeeeeeeee",
         "TestValues": [
           {
             "Number": 99,
-            "Greeting": "Dog",
-            "NestedDictionary": {
-              "Test": "Shark",
-              "vegetable": "Carrot!",
-              "Morning": "Hippo"
+            "Personalization": {
+              "Localization": {
+                "Greeting": "Dog"
+              }
+            },
+            "Nested": {
+              "Values": {
+                "Test": "Shark",
+                "vegetable": "Carrot!",
+                "Morning": "Hippo"
+              }
             }
           },
           {
             "Number": 157,
-            "Greeting": "Mamoth",
-            "NestedDictionary": {
-              "Tea": "Green",
-              "Tromb": "Girafe",
-              "Morning": "Dolphin"
+            "Personalization": {
+              "Localization": {
+                "Greeting": "Mamoth"
+              }
+            },
+            "Nested": {
+              "Values": {
+                "Tea": "Green",
+                "Tromb": "Girafe",
+                "Morning": "Dolphin"
+              }
             }
           }
-        ]
+        ],
+        "Multiple": {
+          "Nests": {
+            "ArrayOfStringsDictionaries": [
+              {
+                "Test0": "I",
+                "Nest0": "Am",
+                "Fest0": "Groot"
+              },
+              {
+                "Kilo": "620",
+                "Mega": "571",
+                "Giga": "951"
+              },
+              {
+                "Phone": "Xiaomi Mi",
+                "OtherPhone": "Samsung Galaxy",
+                "ThirdPhone": "Apple iPhone"
+              }
+            ]
+          }
+        }
       },
       "-879": {
         "Id": "ffffcccc-5555-3335-7777-775599ddee88",
         "TestValues": [
           {
             "Number": 5110,
-            "Greeting": "Cat",
-            "NestedDictionary": {
-              "Test": "Shark",
-              "Algea": "WateredAndAlive",
-              "Morning": "Hippo"
+            "Personalization": {
+              "Localization": {
+                "Greeting": "Cat"
+              }
+            },
+            "Nested": {
+              "Values": {
+                "Test": "Shark",
+                "Algea": "WateredAndAlive",
+                "Morning": "Hippo"
+              }
             }
           },
           {
             "Number": -457,
-            "Greeting": "Rat",
-            "NestedDictionary": {
-              "Food": "FermentedSoybeans",
-              "Tromb": "Girafe",
-              "Morning": "Dolphin"
+            "Personalization": {
+              "Localization": {
+                "Greeting": "Rat"
+              }
+            },
+            "Nested": {
+              "Values": {
+                "Food": "FermentedSoybeans",
+                "Tromb": "Girafe",
+                "Morning": "Dolphin"
+              }
             }
           }
-        ]
+        ],
+        "Multiple": {
+          "Nests": {
+            "ArrayOfStringsDictionaries": [
+              {
+                "Test0": "I",
+                "Nest0": "Am",
+                "Fest0": "Groot"
+              },
+              {
+                "Kilo": "620",
+                "Mega": "571",
+                "Giga": "951"
+              },
+              {
+                "Phone": "Xiaomi Mi",
+                "OtherPhone": "Samsung Galaxy",
+                "ThirdPhone": "Apple iPhone"
+              }
+            ]
+          }
+        }
       }
     }
   }
