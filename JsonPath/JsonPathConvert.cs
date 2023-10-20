@@ -24,13 +24,8 @@ public class PathToModify
 
 public static class JsonPathConvert
 {
-    // TODO: No non-generic enumerables support yet
-    // TODO: Only supports serealizing Properties ATM?
-    // TODO: we currently rely on '.' as path separator
-    // TODO: check if its safe to remove Regex.Escape here as we are escaping in other places and if this would actually have
-    // something we would need to escape - we would end up with double escapes like '\\'
-    private static string DictionaryKeyPlaceholder = Regex.Escape("DictionaryKeyPlaceholder_Dϖὗf5Ἡ🚘♾️z🍆ln9GrD");
-    private static string IteratorPlaceholder = Regex.Escape("IteratorPlaceholder_Aϖὗf5Ἡ🚘♾️z🍆ln9GrA");
+    private const string DICTIONARY_KEY_PLACEHOLDER = "DictionaryKeyPlaceholder_Dϖὗf5Ἡ🚘";
+    private const string ITERATOR_PLACEHOLDER = "IteratorPlaceholder_Aϖὗf5Ἡ🚘";
 
     public static List<Type> TypesToIgnore = new()
     {
@@ -48,7 +43,6 @@ public static class JsonPathConvert
     };
 
     private static JsonSerializerSettings? _defaultSettings = null;
-
     private static readonly Dictionary<Type, List<PathToModify>> KnownTypes = new();
 
     public static void ClearCache()
@@ -56,48 +50,100 @@ public static class JsonPathConvert
         KnownTypes.Clear();
     }
 
-    public static string SerializeObject(object? objectToSerialize, JsonSerializerSettings? settings = null)
+    public static string SerializeObject(object? value) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue));
+
+    public static string SerializeObject(object? value, Formatting formatting) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, formatting));
+
+    public static string SerializeObject(object? value, params JsonConverter[] converters) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, converters));
+
+    public static string SerializeObject(object? value, Formatting formatting, params JsonConverter[] converters) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, formatting, converters));
+
+    public static string SerializeObject(object? value, JsonSerializerSettings? settings) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, settings));
+
+    public static string SerializeObject(object? value, Type? type, JsonSerializerSettings? settings) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, type, settings));
+
+    public static string SerializeObject(object? value, Formatting formatting, JsonSerializerSettings? settings) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, formatting, settings));
+
+    public static string SerializeObject(object? value, Type? type, Formatting formatting, JsonSerializerSettings? settings) =>
+        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, type, formatting, settings));
+
+    /**
+     * Note: to use this overload serializeObjectMethod must be able to serialize Dictionary<string, string>
+     */
+    public static string SerializeObject(object? objectToSerialize, JsonSerializerSettings? settings, Func<object?, string> serializeObjectMethod)
     {
         if (objectToSerialize is null)
-            return JsonConvert.SerializeObject(objectToSerialize, settings);
+            return serializeObjectMethod(objectToSerialize);
 
         settings = GetSettingsToUse(settings);
 
         var type = objectToSerialize.GetType();
         var pathsToModify = type.GetAllPathsToModify(settings);
         if (!pathsToModify.Any())
-            return JsonConvert.SerializeObject(objectToSerialize, settings);
+            return serializeObjectMethod(objectToSerialize);
 
         var flattenedJson = GetFlattenedJsonDictionaryFromObject(objectToSerialize!);
         UpdateJsonPaths(flattenedJson, pathsToModify);
         var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
-        return JsonConvert.SerializeObject(deepStructure, settings);
+        return serializeObjectMethod(deepStructure);
     }
 
-    public static T? DeserializeObject<T>(string json, JsonSerializerSettings? settings = null) where T : new()
+    public static object? DeserializeObject(string value) =>
+        JsonConvert.DeserializeObject(value);
+
+    public static object? DeserializeObject(string value, JsonSerializerSettings settings) =>
+        JsonConvert.DeserializeObject(value, settings);
+
+    public static object? DeserializeObject(string value, Type type) =>
+        DeserializeObject(value, type, null, internalValue => JsonConvert.DeserializeObject(internalValue, type), JsonConvert.SerializeObject);
+
+    public static T? DeserializeObject<T>(string value) where T : new() =>
+        DeserializeObject(value, typeof(T), null, internalValue => JsonConvert.DeserializeObject<T>(internalValue), JsonConvert.SerializeObject);
+
+    public static T? DeserializeObject<T>(string value, params JsonConverter[] converters) where T : new() =>
+        DeserializeObject(value, typeof(T), null, internalValue => JsonConvert.DeserializeObject<T>(internalValue, converters), internalValue => JsonConvert.SerializeObject(internalValue, converters));
+
+    public static T? DeserializeObject<T>(string value, JsonSerializerSettings? settings) where T : new() =>
+        DeserializeObject(value, typeof(T), settings, internalValue => JsonConvert.DeserializeObject<T>(internalValue, settings), internalValue => JsonConvert.SerializeObject(internalValue, settings));
+
+    public static object? DeserializeObject(string value, Type type, params JsonConverter[] converters) =>
+        DeserializeObject(value, type, null, internalValue => JsonConvert.DeserializeObject(internalValue, type), internalValue => JsonConvert.SerializeObject(internalValue, converters));
+
+    public static object? DeserializeObject(string value, Type? type, JsonSerializerSettings? settings) =>
+        DeserializeObject(value, type, settings, internalValue => JsonConvert.DeserializeObject(internalValue, type, settings), internalValue => JsonConvert.SerializeObject(internalValue, type, settings));
+
+    /**
+     * Note: to use this overload deserializeObjectMethod must be able to serialize Dictionary<string, string>
+     */
+    public static T? DeserializeObject<T>(
+        string json,
+        Type type,
+        JsonSerializerSettings? settings,
+        Func<string, T?> deserializeObjectMethod,
+        Func<object?, string> serializeObjectMethod) where T : new()
     {
         if (string.IsNullOrEmpty(json))
-            return JsonConvert.DeserializeObject<T>(json, settings);
+            return deserializeObjectMethod(json);
 
-        if (settings is null)
-        {
-            if (_defaultSettings is null)
-                _defaultSettings = JsonConvert.DefaultSettings?.Invoke();
-            settings = _defaultSettings;
-        }
+        settings = GetSettingsToUse(settings);
 
-        var type = typeof(T);
-        var pathsToModify = type.GetAllPathsToModify(settings);
-        if (pathsToModify.Any())
-        {
-            var flattenedJson = GetFlattenedJsonDictionaryFromJson(json);
-            UpdateJsonPaths(flattenedJson, pathsToModify, isInverted: true);
-            var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
-            var remappedJson = JsonConvert.SerializeObject(deepStructure, settings);
-            return JsonConvert.DeserializeObject<T>(remappedJson);
-        }
+        var pathsToModify = type?.GetAllPathsToModify(settings);
+        if (pathsToModify is null || !pathsToModify.Any())
+            return deserializeObjectMethod(json);
 
-        return JsonConvert.DeserializeObject<T>(json);
+        var flattenedJson = GetFlattenedJsonDictionaryFromJson(json);
+        UpdateJsonPaths(flattenedJson, pathsToModify, isInverted: true);
+
+        var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
+        var remappedJson = serializeObjectMethod(deepStructure);
+        return deserializeObjectMethod(remappedJson);
     }
 
     private static JsonSerializerSettings GetSettingsToUse(JsonSerializerSettings? settings)
@@ -209,8 +255,8 @@ public static class JsonPathConvert
     private static void UpdateDictionaryPaths(Dictionary<string, object?> jsonDictionary, string originalPath, string newPath)
     {
         var matchingPaths = GetMatchingDictionaryPaths(jsonDictionary, originalPath);
-        var orgPathParts = originalPath.Split(DictionaryKeyPlaceholder);
-        var newPathParts = newPath.Split(DictionaryKeyPlaceholder);
+        var orgPathParts = originalPath.Split(DICTIONARY_KEY_PLACEHOLDER);
+        var newPathParts = newPath.Split(DICTIONARY_KEY_PLACEHOLDER);
         foreach (var matchingPath in matchingPaths)
         {
             var pathParts = matchingPath.Split(".");
@@ -227,8 +273,8 @@ public static class JsonPathConvert
                 var valueToReplace = orgPathParts[i];
                 foreach (var index in enumerableIndices)
                 {
-                    replacement = replacement.Replace(IteratorPlaceholder, index);
-                    valueToReplace = valueToReplace.Replace(IteratorPlaceholder, index);
+                    replacement = replacement.Replace(ITERATOR_PLACEHOLDER, index);
+                    valueToReplace = valueToReplace.Replace(ITERATOR_PLACEHOLDER, index);
                 }
 
                 updatedPath = updatedPath.ReplaceFirst(valueToReplace, replacement, out var indexToContinueFrom, currentSkipCount);
@@ -261,7 +307,7 @@ public static class JsonPathConvert
         var result = newPath;
         var indices = GetEnumerablePathIndices(matchingPath);
 
-        var regex = new Regex(IteratorPlaceholder);
+        var regex = new Regex(ITERATOR_PLACEHOLDER);
         foreach (var i in indices)
             result = regex.Replace(result, $"[{i}]", 1);
 
@@ -277,8 +323,8 @@ public static class JsonPathConvert
     private static string[] GetMatchingEnumerablePaths(Dictionary<string, object> jsonDictionary, string path)
     {
         var pattern = "^" + Regex.Escape(path)
-            .Replace(IteratorPlaceholder, @"\[\d+\]")
-            .Replace(DictionaryKeyPlaceholder, @".+?");
+            .Replace(ITERATOR_PLACEHOLDER, @"\[\d+\]")
+            .Replace(DICTIONARY_KEY_PLACEHOLDER, @".+?");
         return jsonDictionary.Keys
             .Where(key => Regex.IsMatch(key, pattern))
             .ToArray();
@@ -287,8 +333,8 @@ public static class JsonPathConvert
     private static string[] GetMatchingDictionaryPaths(Dictionary<string, object> jsonDictionary, string path)
     {
         var pattern = Regex.Escape(path)
-            .Replace(DictionaryKeyPlaceholder, "\\..*")
-            .Replace(IteratorPlaceholder, @"\[\d+\]");
+            .Replace(DICTIONARY_KEY_PLACEHOLDER, "\\..*")
+            .Replace(ITERATOR_PLACEHOLDER, @"\[\d+\]");
         return jsonDictionary.Keys
             .Where(key => Regex.IsMatch(key, pattern))
             .ToArray();
@@ -338,16 +384,16 @@ public static class JsonPathConvert
                 type = type.GetGenericArguments()[0];
             else if (type.IsArray)
                 type = type.GetElementType()!;
-            myName += IteratorPlaceholder;
-            myNewName += IteratorPlaceholder;
+            myName += ITERATOR_PLACEHOLDER;
+            myNewName += ITERATOR_PLACEHOLDER;
             isEnumerable = true;
         }
 
         if (type.IsAssignableTo(typeof(IDictionary)))
         {
             type = type.GetGenericArguments()[1];
-            myName += DictionaryKeyPlaceholder;
-            myNewName += DictionaryKeyPlaceholder;
+            myName += DICTIONARY_KEY_PLACEHOLDER;
+            myNewName += DICTIONARY_KEY_PLACEHOLDER;
             isDictionary = true;
         }
 
