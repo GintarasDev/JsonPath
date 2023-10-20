@@ -1,6 +1,4 @@
-﻿using JsonPath;
-
-namespace JsonPath.Tests.TestingClasses;
+﻿namespace JsonPath.Tests.TestingClasses;
 
 internal class Blog
 {

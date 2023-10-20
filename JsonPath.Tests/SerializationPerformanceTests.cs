@@ -1,74 +1,49 @@
-﻿using Newtonsoft.Json;
-using System.Diagnostics;
+﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
+using JsonPath.Tests.TestingClasses;
+using JsonPath.Tests.TestingClasses.WithoutAttributes;
+using Newtonsoft.Json;
 
 namespace JsonPath.Tests;
 
+#nullable disable warnings
+#pragma warning disable xUnit1013
 public class SerializationPerformanceTests
 {
-    private const int NumberOfTestingIterations = 25000;
-    private const float AcceptableDifferenceMultiplier = 30f;
-    private const float AcceptableDifferenceWithoutAttributesMultiplier = 2f;
+    private BlogSimple _blogWithoutAttributes;
+    private Blog _blog;
 
-    [Fact(Skip = "Temp")]
-    public void Serialize_WithCustomPaths_PerformsAcceptibly()
+    [Fact]
+    public void RunPerformanceTests()
     {
-        // Arrange
-        var blog = Helpers.CreateTestBlog();
-        _ = JsonPathConvert.SerializeObject(blog); // Make sure type is cached
-
-        Warmup();
-        var elapsedTicksNewtonsoftJson = GetAverageSpeed(() => JsonConvert.SerializeObject(blog));
-
-        // Act
-        var elapsedTicksJsonPath = GetAverageSpeed(() => JsonPathConvert.SerializeObject(blog));
-
-        // Assert
-        Assert.True(
-            elapsedTicksNewtonsoftJson * AcceptableDifferenceMultiplier >= elapsedTicksJsonPath,
-            $"NewtonsonJson took: {elapsedTicksNewtonsoftJson} ticks\n" +
-            $"JsonPath took: {elapsedTicksJsonPath} ticks");
+        BenchmarkRunner.Run<SerializationPerformanceTests>();
     }
 
-    [Fact(Skip = "Temp")]
-    public void Serialize_WithoutCustomPaths_PerformsWell()
+    [GlobalSetup]
+    public void Setup()
     {
-        // Arrange
-        var blog = Helpers.CreateTestBlogWithoutAttributes();
-        _ = JsonPathConvert.SerializeObject(blog); // Make sure type is cached
+        _blogWithoutAttributes = Helpers.CreateTestBlogWithoutAttributes();
+        _ = JsonPathConvert.SerializeObject(_blogWithoutAttributes); // Make sure type is cached
 
-        Warmup();
-        var elapsedTicksNewtonsoftJson = GetAverageSpeed(() => JsonConvert.SerializeObject(blog));
-
-        // Act
-        var elapsedTicksJsonPath = GetAverageSpeed(() => JsonPathConvert.SerializeObject(blog));
-
-        // Assert
-        Assert.True(
-            elapsedTicksNewtonsoftJson * AcceptableDifferenceWithoutAttributesMultiplier >= elapsedTicksJsonPath,
-            $"NewtonsonJson took: {elapsedTicksNewtonsoftJson} ticks\n" +
-            $"JsonPath took: {elapsedTicksJsonPath} ticks");
+        _blog = Helpers.CreateTestBlog();
+        _ = JsonPathConvert.SerializeObject(_blog); // Make sure type is cached
     }
 
-    private long GetAverageSpeed(Action action)
+    [Benchmark]
+    public void Serialize()
     {
-        var sw = Stopwatch.StartNew();
-        for (var i = 0; i < NumberOfTestingIterations; i++)
-            action();
-        sw.Stop();
-
-        return sw.ElapsedTicks / NumberOfTestingIterations;
+        _ = JsonPathConvert.SerializeObject(_blog);
     }
 
-    private static void Warmup()
+    [Benchmark]
+    public void Serialize_WithoutCustomPaths()
     {
-        var blog = Helpers.CreateTestBlog();
-        var blogWithoutAttributes = Helpers.CreateTestBlogWithoutAttributes();
+        _ = JsonPathConvert.SerializeObject(_blogWithoutAttributes);
+    }
 
-        // Act
-        for (var i = 0; i < NumberOfTestingIterations; i++)
-        {
-            JsonPathConvert.SerializeObject(blog);
-            JsonConvert.SerializeObject(blogWithoutAttributes);
-        }
+    [Benchmark(Baseline = true)]
+    public void Serialize_WithPureNewtonsoft()
+    {
+        _ = JsonConvert.SerializeObject(_blogWithoutAttributes);
     }
 }
