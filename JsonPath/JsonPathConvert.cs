@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace JsonPath;
 
-public class PathToModify
+internal class PathToModify
 {
     public required string OriginalPath;
     public required string NewPath;
@@ -45,13 +45,10 @@ public static class JsonPathConvert
     private static JsonSerializerSettings? _defaultSettings = null;
     private static readonly Dictionary<Type, List<PathToModify>> KnownTypes = new();
 
-    public static void ClearCache()
-    {
-        KnownTypes.Clear();
-    }
+    public static void ClearCache() => KnownTypes.Clear();
 
     public static string SerializeObject(object? value) =>
-        SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue));
+        SerializeObject(value, null, JsonConvert.SerializeObject);
 
     public static string SerializeObject(object? value, Formatting formatting) =>
         SerializeObject(value, null, internalValue => JsonConvert.SerializeObject(internalValue, formatting));
@@ -342,8 +339,8 @@ public static class JsonPathConvert
 
     private static List<PathToModify> GetAllPathsToModify(this Type type, JsonSerializerSettings? settings)
     {
-        if (KnownTypes.ContainsKey(type))
-            return KnownTypes[type];
+        if (KnownTypes.TryGetValue(type, out var result))
+            return result;
 
         var pathsToModify = new List<PathToModify>();
         foreach (var path in type.GetPathsToModify(settings))
