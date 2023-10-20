@@ -371,7 +371,7 @@ public static class JsonPathConvert
         var myNewName = jsonPathAttribute is null ? myName : jsonPathAttribute.Path;
 
         if (myNewName.EndsWith("."))
-            myNewName += propertyInfo is null ? "WTF_JUST_HAPPENED" : propertyInfo.Name; // TODO: Update
+            myNewName += propertyInfo.Name;
 
         if (type.IsAssignableTo(typeof(IEnumerable))
             && !type.IsAssignableTo(typeof(IDictionary))
