@@ -16,19 +16,11 @@
               "Hi0": "Armadilo"
             }
           },
-          "Personalization": {
-            "Localization": {
-              "Greeting": "Morning!"
-            }
-          }
+          "Personalization": { "Localization": { "Greeting": "Morning!" } }
         },
         "TestKey1": {
           "Number": 1,
-          "Personalization": {
-            "Localization": {
-              "Greeting": "Hi"
-            }
-          },
+          "Personalization": { "Localization": { "Greeting": "Hi" } },
           "Nested": {
             "Values": {
               "Hi0": "Armadilo",
@@ -39,11 +31,7 @@
         },
         "TestKey2": {
           "Number": 85146,
-          "Personalization": {
-            "Localization": {
-              "Greeting": "Sup"
-            }
-          },
+          "Personalization": { "Localization": { "Greeting": "Sup" } },
           "Nested": {
             "Values": {
               "Hi0": "Armadilo",
@@ -68,20 +56,12 @@
                 "Test": "Shark"
               }
             },
-            "Number": 15,
-            "Personalization": {
-              "Localization": {
-                "Greeting": "Lama"
-              }
-            }
+            "Personalization": { "Localization": { "Greeting": "Lama" } },
+            "Number": 15
           },
           {
             "Number": 54,
-            "Personalization": {
-              "Localization": {
-                "Greeting": "Zebra"
-              }
-            },
+            "Personalization": { "Localization": { "Greeting": "Zebra" } },
             "Nested": {
               "Values": {
                 "milkType": "Almond",
@@ -118,11 +98,7 @@
         "TestValues": [
           {
             "Number": 99,
-            "Personalization": {
-              "Localization": {
-                "Greeting": "Dog"
-              }
-            },
+            "Personalization": { "Localization": { "Greeting": "Dog" } },
             "Nested": {
               "Values": {
                 "Test": "Shark",
@@ -133,11 +109,7 @@
           },
           {
             "Number": 157,
-            "Personalization": {
-              "Localization": {
-                "Greeting": "Mamoth"
-              }
-            },
+            "Personalization": { "Localization": { "Greeting": "Mamoth" } },
             "Nested": {
               "Values": {
                 "Tea": "Green",
@@ -174,11 +146,7 @@
         "TestValues": [
           {
             "Number": 5110,
-            "Personalization": {
-              "Localization": {
-                "Greeting": "Cat"
-              }
-            },
+            "Personalization": { "Localization": { "Greeting": "Cat" } },
             "Nested": {
               "Values": {
                 "Test": "Shark",
@@ -189,11 +157,7 @@
           },
           {
             "Number": -457,
-            "Personalization": {
-              "Localization": {
-                "Greeting": "Rat"
-              }
-            },
+            "Personalization": { "Localization": { "Greeting": "Rat" } },
             "Nested": {
               "Values": {
                 "Food": "FermentedSoybeans",

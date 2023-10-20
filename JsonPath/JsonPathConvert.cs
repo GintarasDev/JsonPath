@@ -363,51 +363,56 @@ public static class JsonPathConvert
 
     private static IEnumerable<(string path, string newPath, bool isEnumerable, bool isDictionary)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
     {
-        var isEnumerable = false;
-        var isDictionary = false;
-        var myName = propertyInfo is null ? "" : propertyInfo.Name;
+        var queue = new Queue<(Type type, string path, string newPath, bool isEnumerable, bool isDictionary)>();
+        queue.Enqueue((type, propertyInfo is null ? "" : propertyInfo.Name, propertyInfo?.GetCustomAttribute<JsonPathAttribute>()?.Path ?? propertyInfo?.Name ?? "", false, false));
 
-        var jsonPathAttribute = propertyInfo?.GetCustomAttribute<JsonPathAttribute>();
-        var myNewName = jsonPathAttribute is null ? myName : jsonPathAttribute.Path;
-
-        if (myNewName.EndsWith("."))
-            myNewName += propertyInfo.Name;
-
-        if (type.IsAssignableTo(typeof(IEnumerable))
-            && !type.IsAssignableTo(typeof(IDictionary))
-            && type != typeof(string))
+        while (queue.Count > 0)
         {
-            if (type.IsGenericType)
-                type = type.GetGenericArguments()[0];
-            else if (type.IsArray)
-                type = type.GetElementType()!;
-            myName += ITERATOR_PLACEHOLDER;
-            myNewName += ITERATOR_PLACEHOLDER;
-            isEnumerable = true;
-        }
+            var current = queue.Dequeue();
+            type = current.type;
+            var myName = current.path;
+            var myNewName = current.newPath;
+            var isEnumerable = current.isEnumerable;
+            var isDictionary = current.isDictionary;
 
-        if (type.IsAssignableTo(typeof(IDictionary)))
-        {
-            type = type.GetGenericArguments()[1];
-            myName += DICTIONARY_KEY_PLACEHOLDER;
-            myNewName += DICTIONARY_KEY_PLACEHOLDER;
-            isDictionary = true;
-        }
-
-        if (type.CanHaveSubPaths(settings))
-        {
-            var propertiesToCheck = type.GetProperties();
-
-            myName += ".";
-            myNewName += ".";
-            foreach (var property in propertiesToCheck)
+            if (type.IsAssignableTo(typeof(IEnumerable))
+                && !type.IsAssignableTo(typeof(IDictionary))
+                && type != typeof(string))
             {
-                foreach (var path in property.PropertyType.GetPathsToModify(settings, property))
-                    yield return ($"{myName}{path.path}", $"{myNewName}{path.newPath}", isEnumerable || path.isEnumerable, isDictionary || path.isDictionary);
+                if (type.IsGenericType)
+                    type = type.GetGenericArguments()[0];
+                else if (type.IsArray)
+                    type = type.GetElementType()!;
+                myName += ITERATOR_PLACEHOLDER;
+                myNewName += ITERATOR_PLACEHOLDER;
+                isEnumerable = true;
             }
+
+            if (type.IsAssignableTo(typeof(IDictionary)))
+            {
+                type = type.GetGenericArguments()[1];
+                myName += DICTIONARY_KEY_PLACEHOLDER;
+                myNewName += DICTIONARY_KEY_PLACEHOLDER;
+                isDictionary = true;
+            }
+
+            if (type.CanHaveSubPaths(settings))
+            {
+                var propertiesToCheck = type.GetProperties();
+
+                myName += ".";
+                myNewName += ".";
+                foreach (var property in propertiesToCheck)
+                {
+                    var propertyPath = property.GetCustomAttribute<JsonPathAttribute>()?.Path ?? property.Name;
+                    if (propertyPath.EndsWith("."))
+                        propertyPath += property.Name;
+                    queue.Enqueue((property.PropertyType, $"{myName}{property.Name}", $"{myNewName}{propertyPath}", isEnumerable, isDictionary));
+                }
+            }
+            else
+                yield return (myName, myNewName, isEnumerable, isDictionary);
         }
-        else
-            yield return (myName, myNewName, isEnumerable, isDictionary);
     }
 
     private static bool CanHaveSubPaths(this Type type, JsonSerializerSettings? settings) =>
