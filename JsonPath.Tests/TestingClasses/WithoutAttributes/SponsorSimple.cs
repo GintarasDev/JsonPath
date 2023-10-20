@@ -1,4 +1,4 @@
-﻿namespace QuickJson.Tests.TestingClasses;
+﻿namespace JsonPath.Tests.TestingClasses.WithoutAttributes;
 
 internal class SponsorSimple
 {

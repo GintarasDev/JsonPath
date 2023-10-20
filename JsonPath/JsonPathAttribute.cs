@@ -1,4 +1,4 @@
-﻿namespace QuickJson;
+﻿namespace JsonPath;
 
 public class JsonPathAttribute : Attribute
 {

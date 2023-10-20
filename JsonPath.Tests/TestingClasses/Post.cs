@@ -1,4 +1,6 @@
-﻿namespace QuickJson.Tests.TestingClasses;
+﻿using JsonPath;
+
+namespace JsonPath.Tests.TestingClasses;
 
 internal class Post
 {

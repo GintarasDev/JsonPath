@@ -4,7 +4,7 @@ using System.Collections;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace QuickJson;
+namespace JsonPath;
 
 public class PathToModify
 {
@@ -22,7 +22,7 @@ public class PathToModify
     }
 }
 
-public static class QuickJson
+public static class JsonPathConvert
 {
     // TODO: No non-generic enumerables support yet
     // TODO: Only supports serealizing Properties ATM?

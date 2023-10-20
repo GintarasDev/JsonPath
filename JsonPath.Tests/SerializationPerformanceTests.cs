@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
 
-namespace QuickJson.Tests;
+namespace JsonPath.Tests;
 
 public class SerializationPerformanceTests
 {
@@ -14,19 +14,19 @@ public class SerializationPerformanceTests
     {
         // Arrange
         var blog = Helpers.CreateTestBlog();
-        _ = QuickJson.SerializeObject(blog); // Make sure type is cached
+        _ = JsonPathConvert.SerializeObject(blog); // Make sure type is cached
 
         Warmup();
         var elapsedTicksNewtonsoftJson = GetAverageSpeed(() => JsonConvert.SerializeObject(blog));
 
         // Act
-        var elapsedTicksQuickJson = GetAverageSpeed(() => QuickJson.SerializeObject(blog));
+        var elapsedTicksJsonPath = GetAverageSpeed(() => JsonPathConvert.SerializeObject(blog));
 
         // Assert
         Assert.True(
-            elapsedTicksNewtonsoftJson * AcceptableDifferenceMultiplier >= elapsedTicksQuickJson,
+            elapsedTicksNewtonsoftJson * AcceptableDifferenceMultiplier >= elapsedTicksJsonPath,
             $"NewtonsonJson took: {elapsedTicksNewtonsoftJson} ticks\n" +
-            $"QuickJson took: {elapsedTicksQuickJson} ticks");
+            $"JsonPath took: {elapsedTicksJsonPath} ticks");
     }
 
     [Fact(Skip = "Temp")]
@@ -34,19 +34,19 @@ public class SerializationPerformanceTests
     {
         // Arrange
         var blog = Helpers.CreateTestBlogWithoutAttributes();
-        _ = QuickJson.SerializeObject(blog); // Make sure type is cached
+        _ = JsonPathConvert.SerializeObject(blog); // Make sure type is cached
 
         Warmup();
         var elapsedTicksNewtonsoftJson = GetAverageSpeed(() => JsonConvert.SerializeObject(blog));
 
         // Act
-        var elapsedTicksQuickJson = GetAverageSpeed(() => QuickJson.SerializeObject(blog));
+        var elapsedTicksJsonPath = GetAverageSpeed(() => JsonPathConvert.SerializeObject(blog));
 
         // Assert
         Assert.True(
-            elapsedTicksNewtonsoftJson * AcceptableDifferenceWithoutAttributesMultiplier >= elapsedTicksQuickJson,
+            elapsedTicksNewtonsoftJson * AcceptableDifferenceWithoutAttributesMultiplier >= elapsedTicksJsonPath,
             $"NewtonsonJson took: {elapsedTicksNewtonsoftJson} ticks\n" +
-            $"QuickJson took: {elapsedTicksQuickJson} ticks");
+            $"JsonPath took: {elapsedTicksJsonPath} ticks");
     }
 
     private long GetAverageSpeed(Action action)
@@ -67,7 +67,7 @@ public class SerializationPerformanceTests
         // Act
         for (var i = 0; i < NumberOfTestingIterations; i++)
         {
-            QuickJson.SerializeObject(blog);
+            JsonPathConvert.SerializeObject(blog);
             JsonConvert.SerializeObject(blogWithoutAttributes);
         }
     }

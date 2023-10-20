@@ -1,7 +1,7 @@
-using QuickJson.Tests.TestingClasses;
-using QuickJson.Tests.TestingClasses.WithoutAttributes;
+using JsonPath.Tests.TestingClasses;
+using JsonPath.Tests.TestingClasses.WithoutAttributes;
 
-namespace QuickJson.Tests;
+namespace JsonPath.Tests;
 
 public class DeerializationTests
 {
@@ -13,7 +13,7 @@ public class DeerializationTests
         var json = await Helpers.GetJsonFromTestFile("BlockSimpleSerialized");
 
         // Act
-        var blog = QuickJson.DeserializeObject<BlogSimple>(json);
+        var blog = JsonPathConvert.DeserializeObject<BlogSimple>(json);
 
         // Assert
         Assert.NotNull(blog);
@@ -36,7 +36,7 @@ public class DeerializationTests
         var json = await Helpers.GetJsonFromTestFile("BlockSerialized");
 
         // Act
-        var blog = QuickJson.DeserializeObject<Blog>(json);
+        var blog = JsonPathConvert.DeserializeObject<Blog>(json);
 
         // Assert
         Assert.NotNull(blog);

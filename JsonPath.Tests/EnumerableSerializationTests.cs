@@ -1,4 +1,6 @@
-﻿namespace QuickJson.Tests;
+﻿using JsonPath;
+
+namespace JsonPath.Tests;
 
 public class EnumerableSerializationTests
 {
@@ -10,8 +12,8 @@ public class EnumerableSerializationTests
         var expectedJson = await Helpers.GetJsonFromTestFile("EnumerablesWithAttributesResult");
 
         // Act
-        var serializationResult = QuickJson.SerializeObject(enumerablesTest);
-        
+        var serializationResult = JsonPathConvert.SerializeObject(enumerablesTest);
+
         // Assert
         Assert.Equal(Helpers.RemoveFormattingAndSpaces(expectedJson), Helpers.RemoveFormattingAndSpaces(serializationResult));
         Assert.True(Helpers.IsJsonEqual(expectedJson, serializationResult));

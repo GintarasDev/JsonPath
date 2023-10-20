@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\QuickJson\QuickJson.csproj" />
+    <ProjectReference Include="..\JsonPath\JsonPath.csproj" />
   </ItemGroup>
 
   <ItemGroup>

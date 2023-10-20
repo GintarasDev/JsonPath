@@ -1,4 +1,4 @@
-﻿namespace QuickJson.Tests.TestingClasses.WithoutAttributes;
+﻿namespace JsonPath.Tests.TestingClasses.WithoutAttributes;
 
 internal class BlogSimple
 {

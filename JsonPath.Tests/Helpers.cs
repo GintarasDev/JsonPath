@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using QuickJson.Tests.TestingClasses;
-using QuickJson.Tests.TestingClasses.WithoutAttributes;
+﻿using JsonPath.Tests.TestingClasses;
+using JsonPath.Tests.TestingClasses.WithoutAttributes;
+using Newtonsoft.Json.Linq;
 
-namespace QuickJson.Tests;
+namespace JsonPath.Tests;
 
 internal static class Helpers
 {

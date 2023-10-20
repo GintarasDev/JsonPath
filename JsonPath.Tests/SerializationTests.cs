@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
-using QuickJson.Tests.TestingClasses;
+using JsonPath.Tests.TestingClasses;
 
-namespace QuickJson.Tests;
+namespace JsonPath.Tests;
 
 public class SerializationTests
 {
@@ -14,7 +14,7 @@ public class SerializationTests
         var newtonsoftResult = JsonConvert.SerializeObject(blog, settings);
 
         // Act
-        var result = QuickJson.SerializeObject(blog);
+        var result = JsonPathConvert.SerializeObject(blog);
 
         // Assert
         Assert.Equal(newtonsoftResult, result);
@@ -28,7 +28,7 @@ public class SerializationTests
         var expectedJson = await Helpers.GetJsonFromTestFile("SerializationWithAttributesResult");
 
         // Act
-        var serializationResult = QuickJson.SerializeObject(blog);
+        var serializationResult = JsonPathConvert.SerializeObject(blog);
 
         // Assert
         Assert.Equal(Helpers.RemoveFormattingAndSpaces(expectedJson), Helpers.RemoveFormattingAndSpaces(serializationResult));
@@ -43,7 +43,7 @@ public class SerializationTests
         var expectedJson = await Helpers.GetJsonFromTestFile("NumericsWithAttributesResult");
 
         // Act
-        var serializationResult = QuickJson.SerializeObject(numerics);
+        var serializationResult = JsonPathConvert.SerializeObject(numerics);
 
         // Assert
         Assert.True(Helpers.IsJsonEqual(expectedJson, serializationResult));
