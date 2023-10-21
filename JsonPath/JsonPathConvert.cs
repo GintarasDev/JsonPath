@@ -1,12 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
+using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace JsonPath;
 
-internal class PathToModify
+public class PathToModify
 {
     public required string OriginalPath;
     public required string NewPath;
@@ -83,7 +84,7 @@ public static class JsonPathConvert
 
         var type = objectToSerialize.GetType();
         var pathsToModify = type.GetAllPathsToModify(settings);
-        if (!pathsToModify.Any())
+        if (pathsToModify.Count == 0)
             return serializeObjectMethod(objectToSerialize);
 
         var flattenedJson = GetFlattenedJsonDictionaryFromObject(objectToSerialize!);
@@ -342,29 +343,17 @@ public static class JsonPathConvert
         if (KnownTypes.TryGetValue(type, out var result))
             return result;
 
-        var pathsToModify = new List<PathToModify>();
-        foreach (var path in type.GetPathsToModify(settings))
-        {
-            if (path.path == path.newPath)
-                continue;
-
-            pathsToModify.Add(new()
-            {
-                OriginalPath = path.path[1..],
-                NewPath = path.newPath[1..],
-                IsEnumerable = path.isEnumerable,
-                IsDictionary = path.isDictionary
-            });
-        }
-
+        var pathsToModify = type.GetPathsToModify(settings);
         KnownTypes.TryAdd(type, pathsToModify);
         return pathsToModify;
     }
 
-    private static IEnumerable<(string path, string newPath, bool isEnumerable, bool isDictionary)> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
+    private static List<PathToModify> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
     {
         var queue = new Queue<(Type type, string path, string newPath, bool isEnumerable, bool isDictionary)>();
         queue.Enqueue((type, propertyInfo is null ? "" : propertyInfo.Name, propertyInfo?.GetCustomAttribute<JsonPathAttribute>()?.Path ?? propertyInfo?.Name ?? "", false, false));
+        
+        var pathsToModify = new List<PathToModify>();
 
         while (queue.Count > 0)
         {
@@ -411,8 +400,19 @@ public static class JsonPathConvert
                 }
             }
             else
-                yield return (myName, myNewName, isEnumerable, isDictionary);
+            {
+                if (myName != myNewName)
+                    pathsToModify.Add(new()
+                    {
+                        OriginalPath = myName[1..],
+                        NewPath = myNewName[1..],
+                        IsEnumerable = isEnumerable,
+                        IsDictionary = isDictionary
+                    });
+            }
         }
+
+        return pathsToModify;
     }
 
     private static bool CanHaveSubPaths(this Type type, JsonSerializerSettings? settings) =>
