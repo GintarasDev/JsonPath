@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace JsonPath;
 
-public class PathToModify
+internal class PathToModify
 {
     public required string OriginalPath;
     public required string NewPath;
