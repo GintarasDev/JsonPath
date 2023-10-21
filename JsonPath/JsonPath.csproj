@@ -1,11 +1,39 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>jsonpathconvert</PackageId>
+    <Title>JsonPath Attribute Support</Title>
+    <Authors>gintarasdev</Authors>
+    <PackageTags>NewtonsofJson, JsonPath, Attribute, JsonPathConvert, Json</PackageTags>
+    <PackageReleaseNotes>Added license attribute</PackageReleaseNotes>
+    <Description>Decorator for Newtonsoft Json.NET library that adds support for JsonPath Attribute.
+This attribute allows higher level of control when serializing and deserializing objects by allowing you to change the paths of objects.
+This is beneficial when working with 3rd party APIs that require you to send or responds with deeply nested json structures. With this - you can create a flat POCO and using attributes it will be mapped to nested json structure.</Description>
+    <Copyright>MIT</Copyright>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>JsonPathLogo.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/GintarasDev/JsonPath</RepositoryUrl>
+    <PackageOutputPath>bin\Release\</PackageOutputPath>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Version>1.0.1</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\..\OneDrive\Dokumentai\BlogPosts\JsonPath\JsonPathLogo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
