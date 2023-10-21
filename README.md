@@ -48,6 +48,21 @@ This example class would be serialized to (and can be deserialized from) this js
 
 Note: If the path passed to `JsonPath` attribute ends with '.' - the current name of the property will be used in json. Otherwise - the last path part is considered as a name of the property.
 
+`JsonPathConvert` path includes 'TypesToIgnore' property. This property is a list of values which will not be scanned for `JsonPath` properties.
+It is usefull for stuff like `DateTime` where Newtonsoft's `JsonConvert` would just serialize it to date0time string, so we don't want to scan it's insides.
+Types ignored by default are:
+* DateTime
+* DateTime?
+* DateTimeOffset
+* DateTimeOffset?
+* Guid
+* Guid?
+* TimeSpan
+* TimeSpan?
+* string
+* decimal
+* decimal?
+
 ## Performance
 
 This package is quite slow at the moment. It might be ok for light use in non performance sensitive API, but in general I would suggest waiting for performance oriented updates if performance is a concern.
@@ -61,11 +76,11 @@ AMD Ryzen 7 2700X, 1 CPU, 16 logical and 8 physical cores
 
 
 ```
-| Method                       | Mean       | Error     | StdDev    | Ratio | RatioSD |
-|----------------------------- |-----------:|----------:|----------:|------:|--------:|
-| Serialize                    | 217.035 μs | 1.3642 μs | 1.2094 μs | 25.18 |    0.29 |
-| Serialize_WithoutCustomPaths |   8.625 μs | 0.1079 μs | 0.0901 μs |  1.00 |    0.02 |
-| Serialize_WithPureNewtonsoft |   8.619 μs | 0.1086 μs | 0.0963 μs |  1.00 |    0.00 |
+| Method                            | Mean       | Error     | StdDev    | Ratio | RatioSD |
+|-----------------------------------|-----------:|----------:|----------:|------:|--------:|
+| Baseline (Newtonsoft JsonConvert) |   8.619 μs | 0.1086 μs | 0.0963 μs |  1.00 |    0.00 |
+| Serialize                         | 217.035 μs | 1.3642 μs | 1.2094 μs | 25.18 |    0.29 |
+| Serialize (WithoutCustomPaths)    |   8.625 μs | 0.1079 μs | 0.0901 μs |  1.00 |    0.02 |
 
 ## Limitations
 

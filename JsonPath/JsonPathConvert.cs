@@ -348,10 +348,10 @@ public static class JsonPathConvert
         return pathsToModify;
     }
 
-    private static List<PathToModify> GetPathsToModify(this Type type, JsonSerializerSettings? settings, PropertyInfo? propertyInfo = null)
+    private static List<PathToModify> GetPathsToModify(this Type type, JsonSerializerSettings? settings)
     {
         var queue = new Queue<(Type type, string path, string newPath, bool isEnumerable, bool isDictionary)>();
-        queue.Enqueue((type, propertyInfo is null ? "" : propertyInfo.Name, propertyInfo?.GetCustomAttribute<JsonPathAttribute>()?.Path ?? propertyInfo?.Name ?? "", false, false));
+        queue.Enqueue((type, "", "", false, false));
         
         var pathsToModify = new List<PathToModify>();
 
