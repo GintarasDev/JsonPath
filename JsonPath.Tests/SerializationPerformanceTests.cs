@@ -41,7 +41,7 @@ public class SerializationPerformanceTests
         var type = _blog.GetType();
         _tempPathsToModify = JsonPathConvert.GetAllPathsToModify(type, settings);
 
-        _tempFlattenedJson = JsonPathConvert.GetFlattenedJsonDictionaryFromObject(_blog!);
+        _tempFlattenedJson = JsonPathConvert.GetFlattenedJsonDictionaryFromObjectV2(_blog!, _tempSerializerSettings);
 
         _tempJObject = JObject.FromObject(_blog);
         _tempJson = JsonConvert.SerializeObject(_blog);
@@ -96,12 +96,6 @@ public class SerializationPerformanceTests
     public void GetFlattenedJsonDictionaryFromObjectV2()
     {
         _ = JsonPathConvert.GetFlattenedJsonDictionaryFromObjectV2(_blog, _tempSerializerSettings);
-    }
-
-    [Benchmark]
-    public void GetFlattenedJsonDictionaryFromObject()
-    {
-        _ = JsonPathConvert.GetFlattenedJsonDictionaryFromObject(_blog);
     }
 
     //[Benchmark]

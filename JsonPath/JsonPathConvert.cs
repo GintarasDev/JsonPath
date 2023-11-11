@@ -230,9 +230,6 @@ public static class JsonPathConvert
         return result;
     }
 
-    public static Dictionary<string, object?> GetFlattenedJsonDictionaryFromObject(object objectToSerialize) =>
-        ToFlattenedJsonDictionary(JObject.FromObject(objectToSerialize));
-
     private static Dictionary<string, object?> GetFlattenedJsonDictionaryFromJson(string json) =>
         ToFlattenedJsonDictionary(JObject.Parse(json));
 
