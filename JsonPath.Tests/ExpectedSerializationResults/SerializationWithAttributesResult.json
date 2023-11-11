@@ -7,9 +7,7 @@
       "Name": "Google",
       "Description": "Software company making different software things",
       "NumberOfAds": 2,
-      "Metadata": {
-        "SponsorSince": "2025-04-11T07:23:31"
-      }
+      "Metadata": { "SponsorSince": "2025-04-11T07:23:31" }
     },
     "Id": "11111111-2222-3333-4444-555555555555"
   },
@@ -17,49 +15,35 @@
     "Name": "Microsoft",
     "Description": "Software company making software things",
     "NumberOfAds": 4,
-    "Metadata": {
-      "SponsorSince": "2031-05-17T12:15:05"
-    }
+    "Metadata": { "SponsorSince": "2031-05-17T12:15:05" }
   },
   "Articles": [
     {
       "Title": "Introduction to C#",
+      "Content": "C# is a modern, object-oriented programming language...",
+      "Metadata": { "PublishedOn": "2045-03-12T09:14:07" },
       "Comments": [
         {
-          "Author": {
-            "Name": "JaneDoe"
-          },
+          "Author": { "Name": "JaneDoe" },
           "Content": "Great post!"
         },
         {
-          "Author": {
-            "Name": "BobSmith"
-          },
+          "Author": { "Name": "BobSmith" },
           "Content": "Very informative."
         }
-      ],
-      "Content": "C# is a modern, object-oriented programming language...",
-      "Metadata": {
-        "PublishedOn": "2045-03-12T09:14:07"
-      }
+      ]
     },
     {
       "Title": "Advanced C# Features",
       "Content": "C# has many advanced features such as LINQ, async/await...",
-      "Metadata": {
-        "PublishedOn": "2053-04-09T07:04:01"
-      },
+      "Metadata": { "PublishedOn": "2053-04-09T07:04:01" },
       "Comments": [
         {
-          "Author": {
-            "Name": "AliceJones"
-          },
+          "Author": { "Name": "AliceJones" },
           "Content": "Thanks for sharing!"
         },
         {
-          "Author": {
-            "Name": "CharlieBrown"
-          },
+          "Author": { "Name": "CharlieBrown" },
           "Content": "Can't wait to try these out."
         }
       ]

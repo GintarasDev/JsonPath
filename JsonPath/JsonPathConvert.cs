@@ -1,13 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
-using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace JsonPath;
 
-internal class PathToModify
+public class PathToModify
 {
     public required string OriginalPath;
     public required string NewPath;
@@ -87,7 +87,7 @@ public static class JsonPathConvert
         if (pathsToModify.Count == 0)
             return serializeObjectMethod(objectToSerialize);
 
-        var flattenedJson = GetFlattenedJsonDictionaryFromObject(objectToSerialize!);
+        var flattenedJson = GetFlattenedJsonDictionaryFromObjectV2(objectToSerialize!, settings);
         UpdateJsonPaths(flattenedJson, pathsToModify);
         var deepStructure = GenerateDeepObjectsStructure(flattenedJson);
         return serializeObjectMethod(deepStructure);
@@ -144,26 +144,104 @@ public static class JsonPathConvert
         return deserializeObjectMethod(remappedJson);
     }
 
-    private static JsonSerializerSettings GetSettingsToUse(JsonSerializerSettings? settings)
+    public static JsonSerializerSettings GetSettingsToUse(JsonSerializerSettings? settings)
     {
         if (settings is not null)
             return settings;
 
         return _defaultSettings ?? JsonConvert.DefaultSettings?.Invoke()!;
     }
+    // TODO: this, once completed can be way faster
+    public static Dictionary<string, object> GetFlattenedJsonDictionaryFromObjectV2(object objectToSerialize, JsonSerializerSettings settings)
+    {
+        var result = new Dictionary<string, object>();
+        var objWithPathToCheck = new Queue<(object obj, string path)>();
+        objWithPathToCheck.Enqueue((objectToSerialize, String.Empty));
 
-    private static Dictionary<string, object?> GetFlattenedJsonDictionaryFromObject(object objectToSerialize) =>
+        while (objWithPathToCheck.Count > 0)
+        {
+            var objWithPath = objWithPathToCheck.Dequeue();
+            var typeObj = objWithPath.obj.GetType();
+            if (typeObj.IsAssignableTo(typeof(IEnumerable))
+                    && !typeObj.IsAssignableTo(typeof(IDictionary))
+                    && typeObj != typeof(string))
+            {
+                Type? type = null;
+                if (typeObj.IsArray)
+                    type = typeObj.GetElementType();
+                else
+                    type = typeObj.GetGenericArguments()[0];
+
+                var canHaveSubPaths = type.CanHaveSubPaths(settings);
+                var i = 0;
+                foreach (var element in objWithPath.obj as IEnumerable)
+                {
+                    var path = objWithPath.path + $"[{i}]";
+                    if (canHaveSubPaths)
+                        objWithPathToCheck.Enqueue((element, path));
+                    else
+                        result.Add(path[1..], element);
+                    i++;
+                }
+                continue;
+            }
+
+            if (typeObj.IsAssignableTo(typeof(IDictionary)))
+            {
+                // TODO: filter key to only be basic type
+                var keyType = typeObj.GetGenericArguments()[0];
+                var type = typeObj.GetGenericArguments()[1];
+                var canHaveSubPaths = type.CanHaveSubPaths(settings);
+                var i = 0;
+                foreach (DictionaryEntry element in objWithPath.obj as IDictionary)
+                {
+                    var path = objWithPath.path + $".{element.Key}";// TODO: we can use something more unique here so later identification would be easier
+                    if (canHaveSubPaths)
+                        objWithPathToCheck.Enqueue((element.Value, path));
+                    else
+                        result.Add(path[1..], element.Value);
+                    i++;
+                }
+                continue;
+            }
+
+            var properties = typeObj.GetProperties();
+
+            foreach (var property in properties)
+            {
+                var value = property.GetValue(objWithPath.obj);
+                var newPath = objWithPath.path + $".{property.Name}";
+                if (value is null)
+                    continue; // TODO: leave null handling to Newtonsoft?
+
+                if (property.PropertyType.CanHaveSubPaths(settings))
+                {
+                    // TODO: this could immediatelly get modified name instead of org one, this way Path Modifications would not be needed at all
+                    objWithPathToCheck.Enqueue((value, newPath)); // TODO: support custom names.
+                                                                  // enqueue
+                }
+                else
+                {
+                    result.Add(newPath[1..], value);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static Dictionary<string, object?> GetFlattenedJsonDictionaryFromObject(object objectToSerialize) =>
         ToFlattenedJsonDictionary(JObject.FromObject(objectToSerialize));
 
     private static Dictionary<string, object?> GetFlattenedJsonDictionaryFromJson(string json) =>
         ToFlattenedJsonDictionary(JObject.Parse(json));
 
-    private static Dictionary<string, object?> ToFlattenedJsonDictionary(JObject jObject) =>
+    public static Dictionary<string, object?> ToFlattenedJsonDictionary(JObject jObject) =>
         jObject.Descendants()
             .OfType<JValue>()
             .ToDictionary(v => v.Path, v => v.Value);
 
-    private static Dictionary<string, object> GenerateDeepObjectsStructure(Dictionary<string, object?> jsonDictionary)
+    public static Dictionary<string, object> GenerateDeepObjectsStructure(Dictionary<string, object?> jsonDictionary)
     {
         var root = new Dictionary<string, object>();
         foreach (var keyValuePair in jsonDictionary)
@@ -216,13 +294,30 @@ public static class JsonPathConvert
         return list[index];
     }
 
+    //private static bool TryGetListIndex(string part, out string listName, out int index)
+    //{
+    //    var match = Regex.Match(part, @"(.+)\[(\d+)\]$");
+    //    if (match.Success)
+    //    {
+    //        listName = match.Groups[1].Value;
+    //        index = int.Parse(match.Groups[2].Value);
+    //        return true;
+    //    }
+    //    else
+    //    {
+    //        listName = null;
+    //        index = -1;
+    //        return false;
+    //    }
+    //}
+
     private static bool TryGetListIndex(string part, out string listName, out int index)
     {
-        var match = Regex.Match(part, @"(.+)\[(\d+)\]$");
-        if (match.Success)
+        int bracketIndex = part.IndexOf('[');
+        if (bracketIndex > -1 && part[part.Length - 1] == ']')
         {
-            listName = match.Groups[1].Value;
-            index = int.Parse(match.Groups[2].Value);
+            listName = part.Substring(0, bracketIndex);
+            index = int.Parse(part.Substring(bracketIndex + 1, part.Length - bracketIndex - 2));
             return true;
         }
         else
@@ -233,7 +328,8 @@ public static class JsonPathConvert
         }
     }
 
-    private static void UpdateJsonPaths(Dictionary<string, object?> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
+
+    public static void UpdateJsonPaths(Dictionary<string, object?> jsonDictionary, List<PathToModify> pathsToModify, bool isInverted = false)
     {
         foreach (var pathModification in pathsToModify)
         {
@@ -294,6 +390,8 @@ public static class JsonPathConvert
         }
     }
 
+    // TODO: Replace these regexes with somethign faster
+
     private static string[] GetEnumerableIndex(string pathPart)
     {
         var matches = Regex.Matches(pathPart, @"\[(\d+)\]");
@@ -338,7 +436,7 @@ public static class JsonPathConvert
             .ToArray();
     }
 
-    private static List<PathToModify> GetAllPathsToModify(this Type type, JsonSerializerSettings? settings)
+    public static List<PathToModify> GetAllPathsToModify(this Type type, JsonSerializerSettings? settings)
     {
         if (KnownTypes.TryGetValue(type, out var result))
             return result;
@@ -348,11 +446,11 @@ public static class JsonPathConvert
         return pathsToModify;
     }
 
-    private static List<PathToModify> GetPathsToModify(this Type type, JsonSerializerSettings? settings)
+    public static List<PathToModify> GetPathsToModify(this Type type, JsonSerializerSettings? settings)
     {
         var queue = new Queue<(Type type, string path, string newPath, bool isEnumerable, bool isDictionary)>();
         queue.Enqueue((type, "", "", false, false));
-        
+
         var pathsToModify = new List<PathToModify>();
 
         while (queue.Count > 0)
